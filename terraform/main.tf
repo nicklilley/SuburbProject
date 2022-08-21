@@ -13,6 +13,14 @@ provider "aws" {
   region  = "ap-southeast-2"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "suburbproject-tf-backend"
+    key    = "terraform.tfstate"
+    region = "ap-southeast-2"
+  }
+  }
+
 resource "aws_s3_bucket" "SBX-B" {
   bucket = "sbx-suburbproject-api-responses"
   tags = {

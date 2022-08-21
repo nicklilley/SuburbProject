@@ -1,1 +1,3 @@
 config.py
+.terraform*
+__pycache__*
