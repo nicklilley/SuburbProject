@@ -53,3 +53,4 @@ resource "snowflake_storage_integration" "integration" {
   #storage_allowed_locations = ["s3://${var.env}*"] #Wildcard doesn't work
   #storage_allowed_locations = ["s3://sbx-suburbproject-api-responses/"] Specific bucket works
 }
+

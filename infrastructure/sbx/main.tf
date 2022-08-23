@@ -22,12 +22,13 @@ module "lakehouse-core" {
 #Creates a new suite of infrastructure for a new datasource.
 #Creates infrastructure based on contents of lakehouse-datasoruce directory
 module "lakehouse-datasource-domain" {
-  source                 = "../modules/lakehouse-datasources"
-  datasource             = upper("domain-api") ### ENTER DATASOURCE NAME ###
-  env                    = var.env
-  sf_database_name       = module.lakehouse-core.sf_database_name
-  integrationid          = module.lakehouse-core.integrationid
-  injest_bucket_iam_role = module.lakehouse-core.injest_bucket_iam_role
+  source                     = "../modules/lakehouse-datasources"
+  datasource                 = upper("domain-api") ### ENTER DATASOURCE NAME ###
+  env                        = var.env
+  sf_database_name           = module.lakehouse-core.sf_database_name
+  integrationid              = module.lakehouse-core.integrationid
+  injest_bucket_iam_role     = module.lakehouse-core.injest_bucket_iam_role
+  #injest_bucket_iam_role_arn = module.lakehouse-core.injest_bucket_iam_role_arn
 }
 
 #Creates a new suite of infrastructure for a new datasource.
@@ -38,5 +39,6 @@ module "lakehouse-datasource-schools"   {
   sf_database_name       = module.lakehouse-core.sf_database_name
   env                    = var.env
   integrationid          = module.lakehouse-core.integrationid
-  injest_bucket_iam_role = module.lakehouse-core.injest_bucket_iam_role
+  injest_bucket_iam_role  = module.lakehouse-core.injest_bucket_iam_role
+  #injest_bucket_iam_role_arn = module.lakehouse-core.injest_bucket_iam_role_arn
 }

@@ -64,13 +64,14 @@ resource "snowflake_schema" "raw_schema" {
 #Create Snowflake Stage for Parquet files
 resource "snowflake_stage" "stage_parquet" {
   name                = "STAGE_PARQUET"
-  url                 = "s3://sbx-suburbproject-api-responses-parquet"
+  url                 = "s3://sbx-domain-api-injest-parquet"
+  #url                 = "s3://lower("${var.env}-${var.datasource}-injest-parquet")"
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_schema.name
   file_format         = "TYPE=PARQUET"
   storage_integration = var.integrationid
 }
-
+/*
 #Create Snowflake Stage for JSON files
 resource "snowflake_stage" "stage_json" {
   name                = "STAGE_JSON"
@@ -81,5 +82,146 @@ resource "snowflake_stage" "stage_json" {
   storage_integration = var.integrationid
 }
 
+*/
 
+#Creates SNS topic for Parquet S3 Bucket
+resource "aws_sns_topic" "snowflake_load_bucket_topic" {
+  name = "topic-aws-s3-bucket-${var.datasource}-injest-bucket-parquet"
+  delivery_policy = <<EOF
+  {
+    "http": {
+      "defaultHealthyRetryPolicy": {
+        "minDelayTarget": 20,
+        "maxDelayTarget": 20,
+        "numRetries": 3,
+        "numMaxDelayRetries": 0,
+        "numNoDelayRetries": 0,
+        "numMinDelayRetries": 0,
+        "backoffFunction": "linear"
+      },
+      "disableSubscriptionOverrides": false,
+      "defaultThrottlePolicy": {
+        "maxReceivesPerSecond": 1
+      }
+    }
+  }
+  EOF
+}  
+
+#Get AWS Account ID for code block below
+data "aws_caller_identity" "current" {}
+
+#Creates policy document for the above SNS topic for Parquet S3 Bucket
+data "aws_iam_policy_document" "sns_topic_policy" {
+  policy_id = "__default_policy_ID"
+
+  statement {
+    actions = [
+      "SNS:Subscribe",
+      "SNS:SetTopicAttributes",
+      "SNS:RemovePermission",
+      "SNS:Receive",
+      "SNS:Publish",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:GetTopicAttributes",
+      "SNS:DeleteTopic",
+      "SNS:AddPermission",
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceOwner"
+
+      values = [
+        data.aws_caller_identity.current.account_id,
+      ]
+    }
+
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      aws_sns_topic.snowflake_load_bucket_topic.arn
+    ]
+
+    sid = "__default_statement_ID"
+  }
+
+  statement {
+    actions = [
+      "SNS:Subscribe"
+    ]
+    effect = "Allow"
+ 
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+   # principals {
+   #   type        = "AWS"
+   #   #identifiers = [var.snowflake_account_arn]
+   #   identifiers = [var.injest_bucket_iam_role]
+   # }
+
+    resources = [
+      aws_sns_topic.snowflake_load_bucket_topic.arn
+    ]
+
+    sid = "1"
+  }  
+
+  statement {
+    actions = [
+      "SNS:Publish"
+    ]
+
+    condition {
+      test     = "ArnLike"
+      variable = "AWS:SourceArn"
+      values = [
+        aws_s3_bucket.injest-bucket-parquet.arn,
+      ]
+    }
+
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    resources = [
+      aws_sns_topic.snowflake_load_bucket_topic.arn,
+    ]
+
+    sid = "s3-event-notifier"
+  } 
+}
+
+#Attaches the policy to SNS topic for the Parquet S3 Bucket
+resource "aws_sns_topic_policy" "default" {
+  arn = aws_sns_topic.snowflake_load_bucket_topic.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy.json
+}
+
+
+
+
+
+#Create Snowflake Pipe for Parquet files
+resource "snowflake_pipe" "pipe_parquet" {
+  database             = var.sf_database_name
+  schema               = snowflake_schema.raw_schema.name
+  name                 = "PIPE_PARQUET"
+  comment              = "Copy files from stage into table"
+  copy_statement       = "copy into SBX_RAW.DOMAIN-API.MYPARQUETTABLE from @STAGE_PARQUET"
+  #copy_statement       = "copy into ${var.sf_database_name}.${snowflake_schema.raw_schema.name}.MYPARQUETTABLE from @STAGE_PARQUET"
+  auto_ingest          = true
+  aws_sns_topic_arn    = aws_sns_topic.snowflake_load_bucket_topic.arn
+}
 
