@@ -17,10 +17,24 @@ terraform {
 module "storage" {
   source   = "../modules/storage"
   APP_NAME = var.APP_NAME
-  ENV      = var.ENV
+  env      = var.env
+  datasource     = upper("domain-api")
 }
 
-
 module "lakehouse" {
-  source   = "../modules/lakehouse"
+  source         = "../modules/lakehouse"
+  datasource     = upper("twitter-api")
+  env            = var.env
+}
+
+module "lakehouse-domain" {
+  source         = "../modules/lakehouse"
+  datasource     = upper("domain-api")
+  env            = var.env
+}
+
+module "lakehouse-schools"   {
+  source         = "../modules/lakehouse"
+  datasource     = upper("schools-api")
+  env            = var.env
 }

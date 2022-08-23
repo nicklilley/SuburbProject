@@ -2,7 +2,6 @@ variable "APP_NAME" {
   default = "suburbproject"
 }
 
-variable "ENV" {
+variable "env" {
   default = "sbx"
 }
-

@@ -7,7 +7,7 @@
 #Create Snowflake Create Storage Integration
 
 resource "snowflake_database" "db-raw" {
-  name                        = upper("${var.ENV}_RAW")
+  name                        = upper("${var.env}_RAW")
   comment                     = "test comment"
   data_retention_time_in_days = 3
 }
@@ -24,17 +24,17 @@ resource "snowflake_database" "db-raw" {
 
 #Create S3 Bucket for injesting json files
 resource "aws_s3_bucket" "injest-bucket-json" {
-  bucket = "${var.ENV}-${var.APP_NAME}-api-responses-json"
+  bucket = lower("${var.env}-${var.datasource}-injest-json")
   tags = {
-    Environment = "${var.ENV}"
+    environment = "${var.env}"
   }
 }
 
 #Create S3 Bucket for injesting parquet files
 resource "aws_s3_bucket" "injest-bucket-parquet" {
-  bucket = "${var.ENV}-${var.APP_NAME}-api-responses-parquet"
+  bucket = lower("${var.env}-${var.datasource}-injest-parquet")
   tags = {
-    Environment = "${var.ENV}"
+    environment = "${var.env}"
   }
 }
 
@@ -103,32 +103,31 @@ data "aws_iam_role" "example" {
 
 #Create storage integration for this environment for all buckets
 resource "snowflake_storage_integration" "integration" {
-  name    = "${var.ENV}-STORAGE-INTEGRATION"
-  comment = "${var.ENV} storage integration for S3."
+  name    = upper("${var.env}_STORAGE_INTEGRATION")
+  comment = "${var.env} storage integration for S3."
   type    = "EXTERNAL_STAGE"
   enabled = true
   storage_provider         = "S3"
   storage_aws_role_arn     = aws_iam_role.injest_bucket_role.arn
   storage_allowed_locations = ["*"] #Allow all S3 bucket locations
-  #storage_allowed_locations = ["s3://${var.ENV}*"] #Wildcard doesn't work
+  #storage_allowed_locations = ["s3://${var.env}*"] #Wildcard doesn't work
   #storage_allowed_locations = ["s3://sbx-suburbproject-api-responses/"] Specific bucket works
 }
 
-
 resource "snowflake_stage" "test_stage" {
-  name                = "TEST_STAGE"
+  name                = "STAGE_PARQUET"
   url                 = "s3://sbx-suburbproject-api-responses-parquet"
-  database            = "RAW"
-  schema              = "TFTEST2"
+  database            = upper("${var.env}_RAW")
+  schema              = "${var.datasource}"
   file_format         = "TYPE=PARQUET"
   storage_integration = snowflake_storage_integration.integration.name
 }
 
 resource "snowflake_stage" "test_stageb" {
-  name                = "TEST_STAGE_JSON"
+  name                = "${var.datasource}_STAGE_JSON"
   url                 = "s3://sbx-suburbproject-api-responses-json"
-  database            = "RAW"
-  schema              = "TFTEST2"
+  database            = upper("${var.env}_RAW")
+  schema              = "${var.datasource}"
   file_format         = "TYPE=JSON"
   storage_integration = snowflake_storage_integration.integration.name
 }
