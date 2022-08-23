@@ -1,6 +1,6 @@
 #Create Terraform Backend on S3
-#Run all Storage Modules
-#Run all Infrastructure Modules
+#Run all Lakehouse-Core Modules
+#Run all Lakehouse-Datasources Modules
 
 
 #Set Terraform backend to S3 to hold State and other files
@@ -13,28 +13,30 @@ terraform {
   }
   }
 
-#Create storage (S3 buckets) for ingesting data
-module "storage" {
-  source   = "../modules/storage"
-  APP_NAME = var.APP_NAME
+#Creates infrastructure based on contents of lakehouse-core directory
+module "lakehouse-core" {
+  source   = "../modules/lakehouse-core"
   env      = var.env
-  datasource     = upper("domain-api")
 }
 
-module "lakehouse" {
-  source         = "../modules/lakehouse"
-  datasource     = upper("twitter-api")
-  env            = var.env
+#Creates a new suite of infrastructure for a new datasource.
+#Creates infrastructure based on contents of lakehouse-datasoruce directory
+module "lakehouse-datasource-domain" {
+  source                 = "../modules/lakehouse-datasources"
+  datasource             = upper("domain-api") ### ENTER DATASOURCE NAME ###
+  env                    = var.env
+  sf_database_name       = module.lakehouse-core.sf_database_name
+  integrationid          = module.lakehouse-core.integrationid
+  injest_bucket_iam_role = module.lakehouse-core.injest_bucket_iam_role
 }
 
-module "lakehouse-domain" {
-  source         = "../modules/lakehouse"
-  datasource     = upper("domain-api")
-  env            = var.env
-}
-
-module "lakehouse-schools"   {
-  source         = "../modules/lakehouse"
-  datasource     = upper("schools-api")
-  env            = var.env
+#Creates a new suite of infrastructure for a new datasource.
+#Creates infrastructure based on contents of lakehouse-datasoruce directory
+module "lakehouse-datasource-schools"   {
+  source                 = "../modules/lakehouse-datasources"
+  datasource             = upper("schools-api") ### ENTER DATASOURCE NAME ###
+  sf_database_name       = module.lakehouse-core.sf_database_name
+  env                    = var.env
+  integrationid          = module.lakehouse-core.integrationid
+  injest_bucket_iam_role = module.lakehouse-core.injest_bucket_iam_role
 }

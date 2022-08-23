@@ -1,16 +1,15 @@
 terraform {
+  required_version = ">= 1.2.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 4.16"
     }
+    snowflake = {
+      source  = "Snowflake-Labs/snowflake"
+      version = "~> 0.35"
+    }
   }
-
-  required_version = ">= 1.2.0"
-}
-
-provider "aws" {
-  region  = "ap-southeast-2"
 }
 
 
