@@ -8,6 +8,12 @@ variable "datasource" {
   description = "Name of the datasource or source system"
 }
 
+variable "file_type" {
+  type = string
+  description = "Name of the datasource or source system"
+}
+
+
 variable "integrationid" {
   type = string
 }

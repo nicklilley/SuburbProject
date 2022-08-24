@@ -1,3 +1,4 @@
 config.py
 .terraform*
 __pycache__*
+terraform.txt

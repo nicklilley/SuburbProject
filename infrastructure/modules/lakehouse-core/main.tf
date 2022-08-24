@@ -41,6 +41,7 @@ resource "aws_iam_role" "injest_bucket_role" {
   })
 }
 
+
 #Create storage integration for this environment for all buckets
 resource "snowflake_storage_integration" "integration" {
   name    = upper("${var.env}_STORAGE_INTEGRATION")
@@ -53,4 +54,3 @@ resource "snowflake_storage_integration" "integration" {
   #storage_allowed_locations = ["s3://${var.env}*"] #Wildcard doesn't work
   #storage_allowed_locations = ["s3://sbx-suburbproject-api-responses/"] Specific bucket works
 }
-
