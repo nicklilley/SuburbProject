@@ -1,28 +1,21 @@
-#Create AWS S3 Buckets for ingesting files
+#Create Snowflake Schema
+#Create AWS S3 Bucket for ingesting files
 #Create AWS IAM Policy and attachs to IAM Role
 #Create AWS SNS Topic for S3 Bucket Notifications
-#Create AWS Policy Document for SNS topics and attaches to SNS Topic
+#Create AWS Policy Document for SNS topic and attaches to SNS Topic
 #Create AWS Event Notification for S3 bucket and sends to SNS Topic
-#Create Snowflake Schemas
-#Create Snowflake Stages
+#Create Snowflake Stage
 #Upload template file to AWS S3
-#To Do: #Create File Format based on file in S3 or variables?
-#Create Snowflake table based on template file using infer schema
+#Create Snowflake File Format 
+#Create Snowflake Table based on hardcoded DDL (To Do: Need to do this based on file structure instead)
 #Create Snowflake Pipe 
 
-
-
-#Initialise pipeline DAG
-  #Build Infra -> Run EL job put file into s3 -> DBT run (get table / pipe) and views
-
-#option 2
-  #Build infra / put file into bucket/ table /pipe / delete file from bucket
-
-#Add file to S3 bucket
-#run DBTools script to ingest files into Snowflake
-#To do: Create Snowflake Tables
-#To do: Create Snowflake Pipes
-
+#Create Snowflake Schema in RAW database
+resource "snowflake_schema" "raw_schema" {
+  database            = var.sf_database_name
+  name                = "${var.datasource}"
+  data_retention_days = 14
+}
 
 #Create S3 Bucket for injesting files
 resource "aws_s3_bucket" "injest-bucket" {
@@ -39,9 +32,6 @@ resource "aws_s3_bucket" "injest-bucket" {
 #Creates IAM Policy for above S3 buckets
 resource "aws_iam_role_policy" "injest_bucket_policy" {
   name = "injest_bucket_policy_${var.datasource}"
-  #role = aws_iam_role.injest_bucket_role.id #Attaches policy to the global IAM role create in Core
-  #role = module.lakehouse-core.outputs.iam_role_injest_bucket_id.value #Attaches policy to the role create below
-  #role = "1234"
   role = var.injest_bucket_iam_role
   # Terraform's "jsonencode" function converts a
   # Terraform expression result to valid JSON syntax.
@@ -56,10 +46,8 @@ resource "aws_iam_role_policy" "injest_bucket_policy" {
           "s3:GetObjectVersion"
         ]
         Effect   = "Allow"
-        #Resource = "arn:aws:s3:::${aws_s3_bucket.injest-bucket.bucket}*"
         Resource = [
           "arn:aws:s3:::${aws_s3_bucket.injest-bucket.bucket}*"
-          #"arn:aws:s3:::${aws_s3_bucket.injest-bucket-parquet.bucket}*"
         ]
       },
     ]
@@ -69,20 +57,13 @@ resource "aws_iam_role_policy" "injest_bucket_policy" {
 #Get Snowflake account details for use in IAM Role
 data "snowflake_current_account" "this" {}
 
-#Create Snowflake Schema in RAW database
-resource "snowflake_schema" "raw_schema" {
-  database            = var.sf_database_name
-  name                = "${var.datasource}"
-  data_retention_days = 14
-}
-
 #Create Snowflake Stage for files
 resource "snowflake_stage" "stage" {
   name                = upper("STAGE_${var.file_type}")
   url                 = lower("s3://sbx-${var.datasource}-injest-${var.file_type}")
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_schema.name
-  file_format         = "TYPE=PARQUET"
+  file_format         = upper("TYPE=${var.file_type}")
   storage_integration = var.integrationid
 }
 
@@ -166,7 +147,6 @@ data "aws_iam_policy_document" "sns_topic_policy" {
     actions = [
       "SNS:Publish"
     ]
-
     condition {
       test     = "ArnLike"
       variable = "AWS:SourceArn"
@@ -207,16 +187,11 @@ resource "aws_s3_object" "s3_upload" {
   bucket = aws_s3_bucket.injest-bucket.bucket
   key    = lower("${var.datasource}.${var.file_type}") 
   source = lower("../sbx/file-template/${var.datasource}.${var.file_type}") 
-  # The filemd5() function is available in Terraform 0.11.12 and later
-  # For Terraform 0.11.11 and earlier, use the md5() function and the file() function:
-  # etag = "${md5(file("path/to/file"))}"
-  #etag = filemd5("path/to/file")
 }
-
 
 #Creates Snowflake File Format
 resource "snowflake_file_format" "file_format" {
-  name        = upper("${var.file_type}_FILE_FORMAT")
+  name        = upper("FILE_FORMAT_${var.datasource}_${var.file_type}")
   database    = var.sf_database_name
   schema      = snowflake_schema.raw_schema.name
   format_type = "${var.file_type}"
@@ -227,10 +202,10 @@ resource "snowflake_table" "table" {
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_schema.name
   name                = upper("STG_${var.datasource}")
-  comment             = "Stage table"
+  comment             = "Table for Snowpipe to COPY INTO"
   #data_retention_days = snowflake_schema.schema.data_retention_days
   #change_tracking     = false
-
+  #To do: Figure out how to dynamically generate table DDL
   column {
     name     = "demographics"
     type     = "variant"
@@ -245,7 +220,6 @@ resource "time_sleep" "wait_10_seconds" {
   depends_on = [
     snowflake_table.table, snowflake_stage.stage, aws_s3_bucket_notification.new_objects_notification
   ]
- 
   create_duration = "10s"
 }
 

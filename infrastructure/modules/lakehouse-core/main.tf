@@ -5,7 +5,7 @@
 #Create Raw database for staging data
 resource "snowflake_database" "db-raw" {
   name                        = upper("${var.env}_RAW")
-  comment                     = "test comment"
+  comment                     = "Raw database for staging data"
   data_retention_time_in_days = 3
 }
 
