@@ -86,7 +86,7 @@ resource "snowflake_stage" "stage_json" {
 
 #Creates SNS topic for Parquet S3 Bucket
 resource "aws_sns_topic" "snowflake_load_bucket_topic" {
-  name = "topic-aws-s3-bucket-${var.datasource}-injest-bucket-parquet"
+  name = lower("topic-aws-s3-bucket-${var.datasource}-injest-bucket-parquet")
   delivery_policy = <<EOF
   {
     "http": {
@@ -209,9 +209,19 @@ resource "aws_sns_topic_policy" "default" {
   policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
 
+#Create an event on bucket that sends notification to SNS topic for Parquet S3 Bucket
+resource "aws_s3_bucket_notification" "new_objects_notification" {
+  bucket     = aws_s3_bucket.injest-bucket-parquet.id
 
+  topic {
+    topic_arn     = aws_sns_topic.snowflake_load_bucket_topic.arn
+    events        = ["s3:ObjectCreated:*"]
+  }
 
+ depends_on = [aws_sns_topic.snowflake_load_bucket_topic, aws_sns_topic_policy.default, aws_s3_bucket.injest-bucket-parquet]      
+}
 
+/*
 
 #Create Snowflake Pipe for Parquet files
 resource "snowflake_pipe" "pipe_parquet" {
@@ -219,9 +229,17 @@ resource "snowflake_pipe" "pipe_parquet" {
   schema               = snowflake_schema.raw_schema.name
   name                 = "PIPE_PARQUET"
   comment              = "Copy files from stage into table"
-  copy_statement       = "copy into SBX_RAW.DOMAIN-API.MYPARQUETTABLE from @STAGE_PARQUET"
+  copy_statement    = <<EOT
+  COPY INTO "SBX_RAW"."DOMAIN-API"."MYPARQUETTABLE"
+  FROM (
+  SELECT 
+   *
+  FROM @STAGE_PARQUET t
+  ) FILE_FORMAT = (TYPE = 'parquet')
+    EOT
+  #copy_statement       = "copy into SBX_RAW.DOMAIN-API.MYPARQUETTABLE from @STAGE_PARQUET"
   #copy_statement       = "copy into ${var.sf_database_name}.${snowflake_schema.raw_schema.name}.MYPARQUETTABLE from @STAGE_PARQUET"
   auto_ingest          = true
   aws_sns_topic_arn    = aws_sns_topic.snowflake_load_bucket_topic.arn
 }
-
+*/

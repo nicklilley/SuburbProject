@@ -31,6 +31,8 @@ module "lakehouse-datasource-domain" {
   #injest_bucket_iam_role_arn = module.lakehouse-core.injest_bucket_iam_role_arn
 }
 
+/*
+
 #Creates a new suite of infrastructure for a new datasource.
 #Creates infrastructure based on contents of lakehouse-datasoruce directory
 module "lakehouse-datasource-schools"   {
@@ -42,3 +44,5 @@ module "lakehouse-datasource-schools"   {
   injest_bucket_iam_role  = module.lakehouse-core.injest_bucket_iam_role
   #injest_bucket_iam_role_arn = module.lakehouse-core.injest_bucket_iam_role_arn
 }
+
+*/
