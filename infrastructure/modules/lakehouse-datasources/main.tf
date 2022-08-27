@@ -1,7 +1,7 @@
 #Create Snowflake Schema
 #Create AWS S3 Bucket for ingesting files
 #Create AWS IAM Policy and attachs to IAM Role
-#Create AWS SNS Topic for S3 Bucket Notifications
+#Create AWS SNS Topic (with random name) for S3 Bucket Notifications
 #Create AWS Policy Document for SNS topic and attaches to SNS Topic
 #Create AWS Event Notification for S3 bucket and sends to SNS Topic
 #Create Snowflake Stage
@@ -9,6 +9,7 @@
 #Create Snowflake File Format 
 #Create Snowflake Table based on hardcoded DDL (To Do: Need to do this based on file structure instead)
 #Create Snowflake Pipe 
+#To Do: Apply ENV variables, create new SF_ENV with underscore and upper case
 
 #Create Snowflake Schema in RAW database
 resource "snowflake_schema" "raw_schema" {
@@ -67,9 +68,17 @@ resource "snowflake_stage" "stage" {
   storage_integration = var.integrationid
 }
 
-#Creates SNS topic for S3 Bucket
+#Create a random string and all this to SNS topic below to ensure SNS topic names are unique to address issue with recreating SNS topics and Snowflake Pipes
+#See: https://docs.snowflake.com/en/user-guide/data-load-snowpipe-ts.html
+resource "random_string" "random" {
+  length           = 8
+  special          = false
+  min_lower        = 8
+}
+
+#Creates SNS topic for S3 Bucket with a random name to avoid bug mentioned above
 resource "aws_sns_topic" "snowflake_load_bucket_topic" {
-  name = lower("topic-aws-s3-bucket-${var.datasource}-injest-bucket-${var.file_type}")
+  name = lower("topic-s3-injest-${var.datasource}-${var.file_type}-${(random_string.random.result)}")
   delivery_policy = <<EOF
   {
     "http": {
@@ -207,9 +216,24 @@ resource "snowflake_table" "table" {
   #change_tracking     = false
   #To do: Figure out how to dynamically generate table DDL
   column {
-    name     = "demographics"
+    name     = "file_name"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "payload"
     type     = "variant"
     nullable = true
+  }
+  column {
+    name     = "load_timestamp_tz"
+    type     = "TIMESTAMP_TZ"
+    nullable = false
+  }
+  column {
+    name     = "load_timestamp_ntz"
+    type     = "TIMESTAMP_NTZ"
+    nullable = false
   }
 
 }
@@ -230,7 +254,21 @@ resource "snowflake_pipe" "pipe" {
   name                 = upper("PIPE_${var.datasource}_${var.file_type}")
   comment              = "Copy files from stage into STG table"
   copy_statement       = <<EOT
-   COPY INTO "SBX_RAW"."${var.datasource}"."STG_${var.datasource}" FROM @"SBX_RAW"."${var.datasource}"."STAGE_PARQUET"
+   COPY INTO "SBX_RAW"."${var.datasource}"."STG_${var.datasource}"
+    (
+     "file_name"
+    ,"payload"
+    ,"load_timestamp_tz"
+    ,"load_timestamp_ntz"
+     )
+  from (
+      select
+          metadata$filename
+         ,*
+         ,current_timestamp() AS load_timestamp_tz
+         ,current_timestamp() AS load_timestamp_ntz
+      FROM @"SBX_RAW"."${var.datasource}"."STAGE_PARQUET" t
+        )
    EOT
   auto_ingest          = true
   aws_sns_topic_arn    = aws_sns_topic.snowflake_load_bucket_topic.arn

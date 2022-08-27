@@ -24,7 +24,7 @@ module "lakehouse-core" {
 #Note: Template file PER DATASOURCE must be present in \sbx\file-template
 module "lakehouse-datasource-parquet" {
   source                     = "../modules/lakehouse-datasources" 
-  for_each                   = toset(["domainrealestate","testdatasource"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
+  for_each                   = toset(["apidomainonline","apiexamplecompanyb"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
   datasource                 = upper(each.key) #Converts to uppercase and loops through each item in for_each array and creates resources
   file_type                  = "parquet"
   env                        = var.env
