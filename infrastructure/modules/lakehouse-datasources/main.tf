@@ -210,7 +210,7 @@ resource "snowflake_file_format" "file_format" {
 resource "snowflake_table" "table" {
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_schema.name
-  name                = upper("STG_${var.datasource}")
+  name                = upper("SRC_${var.datasource}")
   comment             = "Table for Snowpipe to COPY INTO"
   #data_retention_days = snowflake_schema.schema.data_retention_days
   #change_tracking     = false
@@ -252,9 +252,9 @@ resource "snowflake_pipe" "pipe" {
   database             = var.sf_database_name
   schema               = snowflake_schema.raw_schema.name
   name                 = upper("PIPE_${var.datasource}_${var.file_type}")
-  comment              = "Copy files from stage into STG table"
+  comment              = "Copy files from stage into SRC table"
   copy_statement       = <<EOT
-   COPY INTO "SBX_RAW"."${var.datasource}"."STG_${var.datasource}"
+   COPY INTO "SBX_RAW"."${var.datasource}"."SRC_${var.datasource}"
     (
      "file_name"
     ,"payload"
