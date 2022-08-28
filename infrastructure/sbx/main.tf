@@ -1,6 +1,6 @@
 #Create Terraform Backend on S3
-#Run all Storage Modules
-#Run all Infrastructure Modules
+#Run all Lakehouse-Core Modules
+#Run all Lakehouse-Datasources Modules
 
 
 #Set Terraform backend to S3 to hold State and other files
@@ -13,14 +13,22 @@ terraform {
   }
   }
 
-#Create storage (S3 buckets) for ingesting data
-module "storage" {
-  source   = "../modules/storage"
-  APP_NAME = var.APP_NAME
-  ENV      = var.ENV
+#Creates infrastructure based on contents of lakehouse-core directory
+module "lakehouse-core" {
+  source   = "../modules/lakehouse-core"
+  env      = var.env
 }
 
-
-module "lakehouse" {
-  source   = "../modules/lakehouse"
+#Creates a new suite of infrastructure for parquet datasource(s) by looping through for_each value
+#Creates infrastructure based on contents of lakehouse-datasoruce directory
+#Note: Template file PER DATASOURCE must be present in \sbx\file-template
+module "lakehouse-datasource-parquet" {
+  source                     = "../modules/lakehouse-datasources" 
+  for_each                   = toset(["apidomainonline","apiexamplecompanyb"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
+  datasource                 = upper(each.key) #Converts to uppercase and loops through each item in for_each array and creates resources
+  file_type                  = "parquet"
+  env                        = var.env
+  sf_database_name           = module.lakehouse-core.sf_database_name
+  integrationid              = module.lakehouse-core.integrationid
+  injest_bucket_iam_role     = module.lakehouse-core.injest_bucket_iam_role
 }
