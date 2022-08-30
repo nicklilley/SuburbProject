@@ -61,7 +61,7 @@ data "snowflake_current_account" "this" {}
 #Create Snowflake Stage for files
 resource "snowflake_stage" "stage" {
   name                = upper("STAGE_${var.file_type}")
-  url                 = lower("s3://sbx-${var.datasource}-injest-${var.file_type}")
+  url                 = lower("s3://${var.env}-${var.datasource}-injest-${var.file_type}")
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_datasource_schema.name
   file_format         = upper("TYPE=${var.file_type}")
@@ -276,7 +276,7 @@ resource "snowflake_pipe" "pipe" {
 resource "aws_s3_object" "s3_upload" {
   bucket            = aws_s3_bucket.injest-bucket.bucket
   key               = lower("${var.datasource}.${var.file_type}") 
-  source            = lower("../sbx/file-template/${var.datasource}.${var.file_type}") 
+  source            = lower("../${var.env}/file-template/${var.datasource}.${var.file_type}") 
   depends_on        = [snowflake_pipe.pipe]
 
 }
