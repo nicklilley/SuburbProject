@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: suburbmetadata
+    description: Suburb and postcode data from MatthewProctor dot com that he sourced from Australian Bureau of Statistics
+    database: sbx_raw
+    schema: suburbmetadata
+    tables:
+      - name: raw_suburbmetadata
+        description: Raw data downloaded from MatthewProctor dot com,
+        columns:
+          - name: suburb
+            description: Name of Suburb
+            tests:
+              - unique
+              - not_null

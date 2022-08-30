@@ -36,7 +36,7 @@ models:
   # GitLab Models
   # ==================
   suburb_project:
-    +materialized: view
+    +materialized: table
 
     # ------------------
     # Sources
@@ -49,7 +49,7 @@ models:
         +materialized: table
         +schema: apidomainonline
 
-      suburbmetadata:S
+      suburbmetadata:
         +materialized: table
         +schema: suburbmetadata
 
