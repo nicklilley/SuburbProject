@@ -2,12 +2,36 @@
 #Create Snowflake Storage Integration for S3
 #Create AWS IAM Role to allow Snowflake to interact with S3
 
-#Create Raw database for staging data
+#Create Raw database for landing data
 resource "snowflake_database" "db-raw" {
   name                        = upper("${var.env}_RAW")
-  comment                     = "Raw database for staging data"
+  comment                     = "Raw database for landing data"
   data_retention_time_in_days = 3
 }
+
+#Create PREP database for DBT source models and transformations
+resource "snowflake_database" "db-prep" {
+  name                        = upper("${var.env}_PREP")
+  comment                     = "Prep data for DBT source models and transformations"
+  data_retention_time_in_days = 3
+}
+
+#Create Snowflake Schema in PREP database
+resource "snowflake_schema" "prep_schema" {
+  database            = snowflake_database.db-prep.name
+  name                = "PREPERATION"
+  data_retention_days = 14
+  depends_on          = [snowflake_database.db-prep]
+}
+
+#Create Snowflake Schema in Analytics database
+resource "snowflake_schema" "common_schema" {
+  database            = "ANALYTICS"
+  name                = "COMMON"
+  data_retention_days = 14
+}
+
+
 
 #Get Snowflake account details for use in IAM Role
 data "snowflake_current_account" "this" {}
