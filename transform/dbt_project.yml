@@ -53,4 +53,16 @@ models:
         +materialized: table
         +schema: suburbmetadata
 
+    # ------------------
+    # Common
+    # ------------------
+    common_prep:
+      +database: "SBX_PREP" #PREP
+      +materialized: table
+      schema: common_prep
+
+    common_:
+      +database: "ANALYTICS" #PREP
+      +materialized: table
+      schema: common
 

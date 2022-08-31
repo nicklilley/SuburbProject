@@ -9,12 +9,12 @@ suburb_demographics AS (
 
 base AS (
     SELECT
-        --Primary Key
-      --  {{ dbt_utils.surrogate_key(['response_option', 'type','suburb','postcode','year'])}} AS suburb_demographics_pk
-        {{ dbt_utils.surrogate_key(['suburb','postcode'])}} AS suburb_demographics_pk
+        --Surrogate Key
+         {{ dbt_utils.surrogate_key(['response_option', 'type','suburb','postcode','year'])}} AS suburb_demographics_sk
 
         --Foreign Keys
-        {{ dbt_utils.surrogate_key(['suburb', 'postcode'])}} AS dim_suburb_sk
+        ,{{ dbt_utils.surrogate_key(['suburb', 'postcode'])}} AS dim_suburb_sk
+        ,to_date(year, 'YYYY') AS dim_date_sk 
 
         --Information
         ,suburb

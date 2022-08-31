@@ -11,6 +11,7 @@ WITH suburb AS (
 		 ,f.value:dc::varchar AS dc
 		 ,f.value:type::varchar AS type
 		 ,f.value:status::varchar AS status
+		 ,regexp_substr(status,  '\\d{1,2}-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-[0-9][0-9][0-9][0-9]')::date AS status_date
 		 ,f.value:sa3::varchar AS sa3
 		 ,f.value:sa3name::varchar AS saname
 		 ,f.value:sa4	::varchar AS sa4

@@ -1,10 +1,20 @@
-WITH dim_suburb AS (
+WITH
+
+prep_suburb AS (
+    SELECT
+        *
+    FROM {{ ref('prep_suburb') }}
+),
+
+base AS (
     SELECT
 		--Surrogate Key
-          {{ dbt_utils.surrogate_key(['suburb','postcode'])}} as dim_suburb_sk
-		--Natural key
-		 ,suburb || '-' || postcode as suburb_id
+         dim_suburb_sk
 
+		--Natural key
+		 ,suburb_id
+		 
+		--Information
 		 ,suburb
 		 ,postcode
 		 ,state
@@ -15,6 +25,7 @@ WITH dim_suburb AS (
 		 ,dc
 		 ,type
 		 ,status
+		 ,status_date
 		 ,sa3
 		 ,saname
 		 ,sa4
@@ -40,7 +51,7 @@ WITH dim_suburb AS (
 		 ,lga_region
 		 ,electorate
 		 ,electorate_rating
-    FROM {{ ref('suburb_source') }}
+    FROM prep_suburb
 )
 
-SELECT * FROM dim_suburb
+SELECT * FROM base
