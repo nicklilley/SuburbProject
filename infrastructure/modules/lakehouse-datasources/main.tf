@@ -211,22 +211,22 @@ resource "snowflake_table" "table" {
   #change_tracking     = false
   #To do: Figure out how to dynamically generate table DDL
   column {
-    name     = "file_name"
+    name     = "FILE_NAME"
     type     = "varchar"
     nullable = false
   }
   column {
-    name     = "payload"
+    name     = "PAYLOAD"
     type     = "variant"
     nullable = true
   }
   column {
-    name     = "load_timestamp_tz"
+    name     = "LOAD_TIMESTAMP_TZ"
     type     = "TIMESTAMP_TZ"
     nullable = false
   }
   column {
-    name     = "load_timestamp_ntz"
+    name     = "LOAD_TIMESTAMP_NTZ"
     type     = "TIMESTAMP_NTZ"
     nullable = false
   }
@@ -251,10 +251,10 @@ resource "snowflake_pipe" "pipe" {
   copy_statement       = <<EOT
    COPY INTO "SBX_RAW"."${var.datasource}"."RAW_${var.datasource}"
     (
-     "file_name"
-    ,"payload"
-    ,"load_timestamp_tz"
-    ,"load_timestamp_ntz"
+     file_name
+    ,payload
+    ,load_timestamp_tz
+    ,load_timestamp_ntz
      )
   from (
       select
