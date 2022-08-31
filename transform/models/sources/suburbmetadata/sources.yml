@@ -9,7 +9,7 @@ sources:
       - name: raw_suburbmetadata
         description: Raw data downloaded from MatthewProctor dot com,
         columns:
-          - name: suburb
+          - name: file_name
             description: Name of Suburb
             tests:
               - unique

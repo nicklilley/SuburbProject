@@ -1,6 +1,10 @@
-with dim_suburb as (
+WITH dim_suburb AS (
     SELECT
-          suburb_id
+		--Surrogate Key
+          {{ dbt_utils.surrogate_key(['suburb','postcode'])}} as dim_suburb_sk
+		--Natural key
+		 ,suburb || '-' || postcode as suburb_id
+
 		 ,suburb
 		 ,postcode
 		 ,state
@@ -39,4 +43,4 @@ with dim_suburb as (
     FROM {{ ref('suburb_source') }}
 )
 
-select * from dim_suburb
+SELECT * FROM dim_suburb
