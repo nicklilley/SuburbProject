@@ -13,7 +13,7 @@ base AS (
          {{ dbt_utils.surrogate_key(['response_option', 'type','suburb','postcode','year'])}} AS suburb_demographics_sk
 
         --Foreign Keys
-        ,{{ dbt_utils.surrogate_key(['suburb', 'postcode'])}} AS dim_suburb_sk
+        ,{{ dbt_utils.surrogate_key(['suburb','postcode','state'])}} AS dim_suburb_sk
         ,to_date(year, 'YYYY') AS dim_date_sk 
 
         --Information

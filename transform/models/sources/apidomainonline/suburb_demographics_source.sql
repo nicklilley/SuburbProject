@@ -1,10 +1,10 @@
 WITH demographics as (
     SELECT
-         SPLIT_PART(file_name, '_', 0) AS api_endpoint
-        ,SPLIT_PART(file_name, '_', 3) AS state
-        ,SPLIT_PART(file_name, '_', 4) AS suburb
-        ,SPLIT_PART(file_name, '_', 5) AS postcode
-        ,SPLIT_PART(SPLIT_PART(file_name, '_', 7), '.', 1) AS api_response_code
+         SPLIT_PART(file_name, '_', 6) AS api_endpoint
+        ,SPLIT_PART(file_name, '_', 0) AS state
+        ,SPLIT_PART(file_name, '_', 2) AS suburb
+        ,SPLIT_PART(file_name, '_', 3) AS postcode
+        ,SPLIT_PART(SPLIT_PART(file_name, '_', 5), '.', 1) AS api_response_code
         ,payload:demographics.year::varchar AS year
         ,payload:demographics.total::varchar AS total
         ,payload:demographics.type::varchar AS type

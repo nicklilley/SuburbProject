@@ -1,21 +1,22 @@
 WITH
 
-prep_suburb AS (
+suburb_geography AS (
     SELECT
         *
-    FROM {{ ref('prep_suburb') }}
+    FROM {{ ref('suburb_geography_source') }}
 ),
 
 base AS (
     SELECT
 		--Surrogate Key
-         dim_suburb_sk
+          {{ dbt_utils.surrogate_key(['suburb','postcode','state'])}} as dim_suburb_sk
 
 		--Natural key
-		 ,suburb_id
+		 ,suburb || '-' || postcode || '-' || state as suburb_id
 		 
 		--Information
-		 ,suburb
+		 --,suburb_id
+         ,suburb
 		 ,postcode
 		 ,state
 		 ,longitude
@@ -25,7 +26,7 @@ base AS (
 		 ,dc
 		 ,type
 		 ,status
-		 ,status_date
+         ,status_date
 		 ,sa3
 		 ,saname
 		 ,sa4
@@ -51,7 +52,15 @@ base AS (
 		 ,lga_region
 		 ,electorate
 		 ,electorate_rating
-    FROM prep_suburb
+    FROM suburb_geography
+),
+
+--Type 1: Only take the latest record
+type1 AS (
+    SELECT 
+        row_number() OVER (PARTITION BY dim_suburb_sk ORDER BY status_date DESC) AS rn
+        ,*
+    FROM base
 )
 
-SELECT * FROM base
+SELECT * FROM type1 where rn = 1

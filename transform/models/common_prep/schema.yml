@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: prep_suburb
+  - name: prep_suburb_geography
     description: Prep table for Australian suburb metadata. This prep table will be used for a suburb dimension
     columns:
       - name: dim_suburb_sk
@@ -16,3 +16,12 @@ models:
         tests:
           - not_null
           - unique
+
+  - name: prep_suburb_realty_performance
+    description: Prep table for realty statistics, such as rental and sales prices. This prep table will be used for Facts and Dimensions
+    columns:
+      - name: suburb_realty_performance_sk
+        tests:
+          - not_null
+          - unique
+

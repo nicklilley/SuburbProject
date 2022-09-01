@@ -1,4 +1,4 @@
-WITH suburb AS (
+WITH suburb_geography AS (
     SELECT
           f.value:id::varchar AS suburb_id
 		 ,initcap(f.value:locality::varchar) AS suburb
@@ -41,4 +41,4 @@ WITH suburb AS (
     ,lateral flatten(input => payload) f
 )
 
-SELECT * FROM suburb
+SELECT * FROM suburb_geography
