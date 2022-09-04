@@ -22,12 +22,22 @@ st.set_page_config(
  )
 #Icons from https://emojipedia.org/search/?q=police
 
+#Hide hamburger menu
+hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        </style>
+        """
+st.markdown(hide_menu_style, unsafe_allow_html=True)
+
+
+
 
 # Initialize connection.
 # Uses st.experimental_singleton to only run once.
 @st.experimental_singleton
 def init_connection():
-    return snowflake.connector.connect(**st.secrets["snowflake"])
+    return snowflake.connector.connect(**st.secrets["snowflake"],client_session_keep_alive=True)
 ctx = init_connection()
 
 # Create a cursor object.

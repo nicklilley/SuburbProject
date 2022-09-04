@@ -18,5 +18,12 @@ progress_bar = st.sidebar.progress(0)
 status_text = st.sidebar.empty()
 
 
+#Hide hamburger menu
+hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        </style>
+        """
+st.markdown(hide_menu_style, unsafe_allow_html=True)
 
 
