@@ -16,6 +16,19 @@ resource "snowflake_database" "db-prep" {
   data_retention_time_in_days = 3
 }
 
+#Create Analytics database data consumption
+resource "snowflake_database" "db-analytics" {
+  name                        = upper("${var.env}_ANALYTICS")
+  comment                     = "Analytics or PROD database for consuming data"
+  data_retention_time_in_days = 3
+}
+
+#Create Warehouse for transforming data 
+resource snowflake_warehouse w {
+  name           = "TRANSFORMING"
+  warehouse_size = "x-small"
+}
+
 #Create Snowflake Schema in PREP database
 resource "snowflake_schema" "prep_schema" {
   database            = snowflake_database.db-prep.name
@@ -26,15 +39,14 @@ resource "snowflake_schema" "prep_schema" {
 
 #Create Snowflake Schema in Analytics database
 resource "snowflake_schema" "common_schema" {
-  database            = "ANALYTICS"
+  database            = upper("${var.env}_ANALYTICS")
   name                = "COMMON"
   data_retention_days = 14
+  depends_on          = [snowflake_database.db-analytics]
 }
 
-
-
 #Get Snowflake account details for use in IAM Role
-data "snowflake_current_account" "this" {}
+#data "snowflake_current_account" "this" {}
 
 #Creates IAM Role for all buckets and allows Snowflake account to access buckets
 resource "aws_iam_role" "injest_bucket_role" {
@@ -57,7 +69,8 @@ resource "aws_iam_role" "injest_bucket_role" {
         Principal = { "AWS": "*" }
         Condition = {
           "StringLike": {
-            "sts:ExternalId": "${data.snowflake_current_account.this.account}_SFCRole=*"
+            #"sts:ExternalId": "${data.snowflake_current_account.this.account}_SFCRole=*"
+             "sts:ExternalId": "${local.snowflake_creds.account}_SFCRole=*"
           }
         }
       },     
