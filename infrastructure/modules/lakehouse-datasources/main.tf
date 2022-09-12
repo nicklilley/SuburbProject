@@ -202,6 +202,7 @@ resource "snowflake_file_format" "file_format" {
 
 }
 
+#Creates Snowflake table for Snowpipe to copy data into
 resource "snowflake_table" "table" {
   database            = var.sf_database_name
   schema              = snowflake_schema.raw_datasource_schema.name
