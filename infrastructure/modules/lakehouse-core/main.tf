@@ -45,8 +45,44 @@ resource "snowflake_schema" "common_schema" {
   depends_on          = [snowflake_database.db-analytics]
 }
 
-#Get Snowflake account details for use in IAM Role
-#data "snowflake_current_account" "this" {}
+
+#Creates Snowflake Table to serve as API call log
+resource "snowflake_table" "table" {
+  database            = upper("${var.env}_RAW")
+  schema              = "PUBLIC"
+  name                = "API_CALL_LOG"
+  comment             = "Table for log of API calls across all projects"
+  column {
+    name     = "API_NAME"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "SEED_TABLE"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "SEED_KEY"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "TARGET_URL"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "API_STATUS_CODE"
+    type     = "varchar"
+    nullable = false
+  }
+  column {
+    name     = "API_CALL_DATETIME"
+    type     = "varchar"
+    nullable = false
+  }
+}
 
 #Creates IAM Role for all buckets and allows Snowflake account to access buckets
 resource "aws_iam_role" "injest_bucket_role" {
