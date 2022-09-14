@@ -50,11 +50,10 @@ dim_date_sk
 ,suburb
 ,metric
 ,value
-FROM ANALYTICS.DBT_NLILLEYMAN_COMMON.FCT_SUBURB_REALTY_PERFORMANCE PERF
-LEFT JOIN ANALYTICS.DBT_NLILLEYMAN_COMMON.DIM_SUBURB_GEOGRAPHY GEO on GEO.dim_suburb_sk = PERF.dim_suburb_sk
+FROM SBX_ANALYTICS.DBT_NLILLEYMAN_COMMON.FCT_SUBURB_REALTY_PERFORMANCE PERF
+LEFT JOIN SBX_ANALYTICS.DBT_NLILLEYMAN_COMMON.DIM_SUBURB_GEOGRAPHY GEO on GEO.dim_suburb_sk = PERF.dim_suburb_sk
 WHERE 1=1
 AND metric in ('medianSoldPrice','medianRentListingPrice','daysOnMarket','numberSold')
-AND suburb IN ('Willetton', 'Harrisdale')
 ORDER BY dim_date_sk ASC
  """)
 cur.execute(sql)
