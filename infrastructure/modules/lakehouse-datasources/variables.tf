@@ -13,7 +13,6 @@ variable "file_type" {
   description = "Name of the datasource or source system"
 }
 
-
 variable "integrationid" {
   type = string
 }

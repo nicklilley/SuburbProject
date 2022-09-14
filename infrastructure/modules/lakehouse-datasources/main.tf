@@ -12,7 +12,7 @@
 #To Do: Apply ENV variables, create new SF_ENV with underscore and upper case
 
 #Create Snowflake Schema in RAW database
-resource "snowflake_schema" "raw_schema" {
+resource "snowflake_schema" "raw_datasource_schema" {
   database            = var.sf_database_name
   name                = "${var.datasource}"
   data_retention_days = 14
@@ -61,9 +61,9 @@ data "snowflake_current_account" "this" {}
 #Create Snowflake Stage for files
 resource "snowflake_stage" "stage" {
   name                = upper("STAGE_${var.file_type}")
-  url                 = lower("s3://sbx-${var.datasource}-injest-${var.file_type}")
+  url                 = lower("s3://${var.env}-${var.datasource}-injest-${var.file_type}")
   database            = var.sf_database_name
-  schema              = snowflake_schema.raw_schema.name
+  schema              = snowflake_schema.raw_datasource_schema.name
   file_format         = upper("TYPE=${var.file_type}")
   storage_integration = var.integrationid
 }
@@ -191,47 +191,43 @@ resource "aws_s3_bucket_notification" "new_objects_notification" {
  depends_on = [aws_sns_topic.snowflake_load_bucket_topic, aws_sns_topic_policy.default, aws_s3_bucket.injest-bucket]      
 }
 
-#Upload Template File to S3 to enable creation of Table based on file structure
-resource "aws_s3_object" "s3_upload" {
-  bucket = aws_s3_bucket.injest-bucket.bucket
-  key    = lower("${var.datasource}.${var.file_type}") 
-  source = lower("../sbx/file-template/${var.datasource}.${var.file_type}") 
-}
-
 #Creates Snowflake File Format
 resource "snowflake_file_format" "file_format" {
   name        = upper("FILE_FORMAT_${var.datasource}_${var.file_type}")
   database    = var.sf_database_name
-  schema      = snowflake_schema.raw_schema.name
+  schema      = snowflake_schema.raw_datasource_schema.name
   format_type = "${var.file_type}"
-  #compression = "NONE"
+  #compression = "AUTO"
+  depends_on = [snowflake_schema.raw_datasource_schema]
+
 }
 
+#Creates Snowflake table for Snowpipe to copy data into
 resource "snowflake_table" "table" {
   database            = var.sf_database_name
-  schema              = snowflake_schema.raw_schema.name
-  name                = upper("SRC_${var.datasource}")
+  schema              = snowflake_schema.raw_datasource_schema.name
+  name                = upper("RAW_${var.datasource}")
   comment             = "Table for Snowpipe to COPY INTO"
   #data_retention_days = snowflake_schema.schema.data_retention_days
   #change_tracking     = false
   #To do: Figure out how to dynamically generate table DDL
   column {
-    name     = "file_name"
+    name     = "FILE_NAME"
     type     = "varchar"
     nullable = false
   }
   column {
-    name     = "payload"
+    name     = "PAYLOAD"
     type     = "variant"
     nullable = true
   }
   column {
-    name     = "load_timestamp_tz"
+    name     = "LOAD_TIMESTAMP_TZ"
     type     = "TIMESTAMP_TZ"
     nullable = false
   }
   column {
-    name     = "load_timestamp_ntz"
+    name     = "LOAD_TIMESTAMP_NTZ"
     type     = "TIMESTAMP_NTZ"
     nullable = false
   }
@@ -240,7 +236,7 @@ resource "snowflake_table" "table" {
 
 #Need to give time for AWS Roles to become active before creating Snowflake Pipes
 #https://community.snowflake.com/s/question/0D50Z00009UruoRSAR/troubleshooting-sql-execution-error-error-assuming-awsrole-please-verify-the-role-and-externalid-are-configured-correctly-in-your-aws-policy
-resource "time_sleep" "wait_10_seconds" {
+resource "time_sleep" "wait_x_seconds" {
   depends_on = [
     snowflake_table.table, snowflake_stage.stage, aws_s3_bucket_notification.new_objects_notification
   ]
@@ -250,16 +246,16 @@ resource "time_sleep" "wait_10_seconds" {
 #Create Snowflake Pipe for files
 resource "snowflake_pipe" "pipe" {
   database             = var.sf_database_name
-  schema               = snowflake_schema.raw_schema.name
+  schema               = snowflake_schema.raw_datasource_schema.name
   name                 = upper("PIPE_${var.datasource}_${var.file_type}")
-  comment              = "Copy files from stage into SRC table"
+  comment              = "Copy files from stage into RAW table"
   copy_statement       = <<EOT
-   COPY INTO "SBX_RAW"."${var.datasource}"."SRC_${var.datasource}"
+   COPY INTO "SBX_RAW"."${var.datasource}"."RAW_${var.datasource}"
     (
-     "file_name"
-    ,"payload"
-    ,"load_timestamp_tz"
-    ,"load_timestamp_ntz"
+     file_name
+    ,payload
+    ,load_timestamp_tz
+    ,load_timestamp_ntz
      )
   from (
       select
@@ -267,11 +263,21 @@ resource "snowflake_pipe" "pipe" {
          ,*
          ,current_timestamp() AS load_timestamp_tz
          ,current_timestamp() AS load_timestamp_ntz
-      FROM @"SBX_RAW"."${var.datasource}"."STAGE_PARQUET" t
+      FROM @"SBX_RAW"."${var.datasource}"."STAGE_${var.file_type}" t
         )
    EOT
   auto_ingest          = true
   aws_sns_topic_arn    = aws_sns_topic.snowflake_load_bucket_topic.arn
-  depends_on           = [time_sleep.wait_10_seconds, snowflake_table.table, snowflake_stage.stage, aws_s3_bucket_notification.new_objects_notification]
+  depends_on           = [time_sleep.wait_x_seconds, snowflake_table.table, snowflake_stage.stage, aws_s3_bucket_notification.new_objects_notification]
+
+}
+
+
+#Upload Template File to S3 to test full process
+resource "aws_s3_object" "s3_upload" {
+  bucket            = aws_s3_bucket.injest-bucket.bucket
+  key               = lower("${var.datasource}.${var.file_type}") 
+  source            = lower("../${var.env}/file-template/${var.datasource}.${var.file_type}") 
+  depends_on        = [snowflake_pipe.pipe]
 
 }

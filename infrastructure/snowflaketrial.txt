@@ -1,0 +1,7 @@
+To switch Snowflake trial accounts:
+- Create new trial with . in email address
+- Create account NICKLILLEYMAN
+- Create TERRAFORM_NICK account in Snowflake with password stored in AWS Secrets manager
+- Grant TERRAFORM_NICK accountadmin in Snowflake
+- Change DBT acount target (https://cloud.getdbt.com/next/settings/96742/projects/148423/connections/84291)
+- Change secrets for Streamlit Cloud and Local (SuburbProject\.streamlit\secrets.toml)
