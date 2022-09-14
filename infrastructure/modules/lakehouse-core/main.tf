@@ -2,7 +2,7 @@
 #Create Snowflake Storage Integration for S3
 #Create AWS IAM Role to allow Snowflake to interact with S3
 
-#Create Raw database for landing data
+#Create RAW database for landing data
 resource "snowflake_database" "db-raw" {
   name                        = upper("${var.env}_RAW")
   comment                     = "Raw database for landing data"
@@ -55,33 +55,44 @@ resource "snowflake_table" "table" {
   column {
     name     = "API_NAME"
     type     = "varchar"
-    nullable = false
+    nullable = true
   }
   column {
     name     = "SEED_TABLE"
     type     = "varchar"
-    nullable = false
+    nullable = true
   }
   column {
     name     = "SEED_KEY"
     type     = "varchar"
-    nullable = false
+    nullable = true
   }
   column {
     name     = "TARGET_URL"
     type     = "varchar"
-    nullable = false
+    nullable = true
   }
   column {
     name     = "API_STATUS_CODE"
     type     = "varchar"
-    nullable = false
+    nullable = true
+  }
+  column {
+    name     = "API_STATUS_REASON"
+    type     = "varchar"
+    nullable = true
+  }
+  column {
+    name     = "LOOP_OUTCOME"
+    type     = "varchar"
+    nullable = true
   }
   column {
     name     = "API_CALL_DATETIME"
-    type     = "varchar"
-    nullable = false
+    type     = "timestamp"
+    nullable = true
   }
+  depends_on          = [snowflake_database.db-raw]
 }
 
 #Creates IAM Role for all buckets and allows Snowflake account to access buckets
