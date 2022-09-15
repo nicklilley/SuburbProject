@@ -29,7 +29,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 # Model Configs
 # ==================
 models:
-  +database: "ANALYTICS" # PROD
+  +database: "SBX_ANALYTICS" # PROD
   #+schema: legacy  # Top level override since profiles defaults to PREP
 
   # ==================
@@ -62,7 +62,7 @@ models:
       schema: common_prep
 
     common_:
-      +database: "ANALYTICS" #PREP
+      +database: "SBX_ANALYTICS" #PREP
       +materialized: table
       schema: common
 

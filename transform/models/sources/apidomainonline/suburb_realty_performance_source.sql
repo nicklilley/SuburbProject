@@ -7,6 +7,7 @@ WITH realty_performance as (
         ,SPLIT_PART(SPLIT_PART(file_name, '_', 5), '.', 1) AS api_response_code
         ,f.value:year AS year
         ,f.value:month AS month
+        ,SPLIT_PART(SPLIT_PART(file_name, '_', 7), '.', 1) AS property_type
         ,f1.key AS metric
         ,f1.value AS value
     FROM {{source('apidomainonline', 'raw_apidomainonline')}} p

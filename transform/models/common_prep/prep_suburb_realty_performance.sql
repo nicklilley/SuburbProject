@@ -22,6 +22,7 @@ base AS (
         ,state
         ,year
         ,month
+        ,property_type
         ,metric
         ,value
     FROM suburb_realty_performance

@@ -17,6 +17,7 @@ base AS (
 		 
         --Information
         ,metric
+        ,property_type
         ,value
     FROM prep_suburb_realty_performance
 )
