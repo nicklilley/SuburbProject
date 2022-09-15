@@ -1,0 +1,7 @@
+api_call_target_id,state,postcode,suburb,api_type
+1,NSW,2009,Pyrmont,demographics
+2,WA,6155,Willetton,demographics
+3,WA,6112,Harrisdale,demographics
+4,NSW,2009,Pyrmont,suburbPerformanceStatistics
+5,WA,6155,Willetton,suburbPerformanceStatistics
+6,WA,6112,Harrisdale,suburbPerformanceStatistics

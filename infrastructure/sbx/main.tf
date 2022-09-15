@@ -19,14 +19,27 @@ module "lakehouse-core" {
   env      = var.env
 }
 
-#Creates a new suite of infrastructure for parquet datasource(s) by looping through for_each value
+#Creates a new suite of infrastructure for --PARQUET-- datasource(s) by looping through for_each value
 #Creates infrastructure based on contents of lakehouse-datasoruce directory
-#Note: Template file PER DATASOURCE must be present in \sbx\file-template
 module "lakehouse-datasource-parquet" {
   source                     = "../modules/lakehouse-datasources" 
   for_each                   = toset(["apidomainonline","apiexamplecompanyb"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
   datasource                 = upper(each.key) #Converts to uppercase and loops through each item in for_each array and creates resources
-  file_type                  = "parquet"
+  file_type                  = upper("parquet")
+  env                        = var.env
+  sf_database_name           = module.lakehouse-core.sf_database_name
+  integrationid              = module.lakehouse-core.integrationid
+  injest_bucket_iam_role     = module.lakehouse-core.injest_bucket_iam_role
+}
+
+
+#Creates a new suite of infrastructure for --JSON-- datasource(s) by looping through for_each value
+#Creates infrastructure based on contents of lakehouse-datasoruce directory
+module "lakehouse-datasource-json" {
+  source                     = "../modules/lakehouse-datasources" 
+  for_each                   = toset(["suburbmetadata"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
+  datasource                 = upper(each.key) #Converts to uppercase and loops through each item in for_each array and creates resources
+  file_type                  = upper("json")
   env                        = var.env
   sf_database_name           = module.lakehouse-core.sf_database_name
   integrationid              = module.lakehouse-core.integrationid
