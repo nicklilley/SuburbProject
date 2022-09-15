@@ -38,6 +38,6 @@ st.markdown("Select a page on the sidebar to explore data")
 
 st.sidebar.text('')
 
-st.image("visualisation/underconstruction.png", width=400)
+st.image("visualisation/images/underconstruction.png", width=400)
 
 
