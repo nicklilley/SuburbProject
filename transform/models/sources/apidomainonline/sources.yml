@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: apidomainonline
+    description: A clone of a Postgres application database.
+    database: sbx_raw
+    schema: apidomainonline
+    tables:
+      - name: raw_apidomainonline
+        description: Raw data from Domain API
+        columns:
+          - name: file_name
+            description: Name of file loaded into table
+            tests:
+              - unique
+              - not_null

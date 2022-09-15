@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: dim_suburb
+    description: Dimension table for Australian suburb metadata
+    columns:
+      - name: dim_suburb_sk
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_suburb_demographics
+    description: Fact table for suburb demograhpic data from the ABS
+    columns:
+      - name: suburb_demographics_pk
+        tests:
+          - not_null
+          - unique
