@@ -12,7 +12,6 @@ from datetime import timedelta
 # PAGE CONFIGURATION #########################
 ##############################################
 
-
 st.set_page_config(
      page_title="Housing Affordability",
      page_icon="💰",
@@ -24,6 +23,9 @@ st.set_page_config(
          'About': "# This is a header. This is an *extremely* cool app!"
      }
  )
+
+st.write('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
+
 #Icons from https://emojipedia.org/search/?q=police
 
 #Hide hamburger menu
@@ -43,13 +45,20 @@ st.markdown(hide_menu_style, unsafe_allow_html=True)
 @st.experimental_singleton
 def init_connection():
     return snowflake.connector.connect(**st.secrets["snowflake"],client_session_keep_alive=True)
-ctx = init_connection()
+init_con = init_connection()
 
 # Create a cursor object.
-cur = ctx.cursor()
+#cursor = init_con.cursor()
 
-# Execute a statement that will generate a result set.
-sql = ("""
+#Define function for running queries after creating cache and cursor
+@st.experimental_memo(ttl=600)
+def run_query(query):
+    with init_con.cursor() as cursor:
+        cursor.execute(query)
+        return cursor.fetch_pandas_all()
+
+# Fetch the result set from the cursor and deliver it as the Pandas DataFrame.
+df = run_query("""
 SELECT 
 dim_date_sk
 ,suburb
@@ -61,12 +70,6 @@ LEFT JOIN SBX_ANALYTICS.DBT_NLILLEYMAN_COMMON.DIM_SUBURB_GEOGRAPHY GEO on GEO.di
 WHERE 1=1
 ORDER BY dim_date_sk ASC
  """)
-cur.execute(sql)
-
-# Fetch the result set from the cursor and deliver it as the Pandas DataFrame.
-df = cur.fetch_pandas_all()
-#df.set_index('DIM_DATE_SK')
-#df['DIM_DATE_SK']=pd.to_datetime(df['DIM_DATE_SK'])
 df['VALUE']=pd.to_numeric(df['VALUE'])
 
 
@@ -75,7 +78,7 @@ df['VALUE']=pd.to_numeric(df['VALUE'])
 # INTRODUCTION  ##############################
 ##############################################
 st.title('Housing Affordability')
-st.markdown("Sales & rental prices trends across suburbs")
+#st.markdown("Sales & rental prices trends across suburbs")
 
 ###############################################
 # SIDEBAR SELECTION ###########################
@@ -91,14 +94,14 @@ st.sidebar.markdown("**Select Filters:** 👇")
 #Set Date variables
 today = date.today()
 xyearsago = today - datetime.timedelta(days=5*365)
-min_date = date(2011, 1, 1)
+min_date = date(2011, 1, 1) #API only goes back to 2011
 
 #Get unique values for a column inside the dataframe
 unique_suburbs = df['SUBURB'].unique()
 unique_property_type = df['PROPERTY_TYPE'].unique()
 unique_metrics= df['METRIC'].unique()
 
-#Date Slider Filter
+#Date Slider Filter sidebar
 date_range = st.sidebar.slider(
     "Date Range",
     value=(xyearsago, today),
@@ -106,41 +109,83 @@ date_range = st.sidebar.slider(
     min_value=min_date,
     format="MMM-YY")
 
-#Suburb Filter
-select_suburbs = st.sidebar.multiselect(
+#Metric filter sidebar
+#select_metric = st.sidebar.selectbox(
+#    "Select a Metric",
+#    (unique_metrics),
+#    index=0
+#)
+
+#Metric filter 
+#select_metric = st.selectbox(
+#    "Select a Metric",
+#    (unique_metrics),
+#    index=0
+#)
+
+#Suburb Filter sidebar
+#select_suburbs = st.sidebar.multiselect(
+#    "Select Suburb(s)",
+#    (unique_suburbs),
+#    default=["Willetton","Harrisdale"]
+#)
+
+
+#Property_type Filter
+#select_property_types = st.multiselect(
+#    "Select Property Type(s)",
+#    (unique_property_type),
+#    default=["house"]
+#)
+
+################ MAIN PAGE FILTERS ######################
+
+#Display Metric and Property Type filter in columns
+col1, col2 = st.columns(2,gap="small")
+with col1:
+    select_metric = st.selectbox(
+        "Select a Metric",
+        (unique_metrics),
+        index=0
+    )
+
+with col2:
+   select_property_types = st.multiselect(
+         "Select Property Type(s)",
+        (unique_property_type),
+        default=["house"]
+)
+
+#Suburb Filter 
+select_suburbs = st.multiselect(
     "Select Suburb(s)",
     (unique_suburbs),
     default=["Willetton","Harrisdale"]
 )
 
-#Property_type Filter
-select_property_types = st.sidebar.multiselect(
-    "Select Property Type(s)",
-    (unique_property_type),
-    default=["house"]
-)
-
-#Metric filter
-select_metric = st.sidebar.selectbox(
-    "Select a Metric",
-    (unique_metrics),
-    index=0
-)
 
 #Filter Dataframe based on user filter selections
-#df['DIM_DATE_SK']=pd.to_datetime(df['DIM_DATE_SK'])
-#df['DIM_DATE_SK'] = DIM_DATE_SK.dt.date
-#df = df.loc[df['DIM_DATE_SK'].between('2021-01-01', '2022-01-01')]
 df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date #convert DIM_DATE_SK to date
-df = df.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])]
-df = df[df.SUBURB.isin(select_suburbs)]
-df = df[df.PROPERTY_TYPE.isin(select_property_types)]
-df = df.query("METRIC == @select_metric")
+df_filt_1 = df[df.SUBURB.isin(select_suburbs)] #Suburb Filter
+df_filt_2 = df_filt_1.query("METRIC == @select_metric") #Metric Filter
+df_filt_3 = df_filt_2[df.PROPERTY_TYPE.isin(select_property_types)] #Property Type Filter
+df_filt_4 = df_filt_3.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])] #Date Range Filter
+
 
 ###############################################
 # PLOT CHART ##################################
 ###############################################
-chart = alt.Chart(df).mark_line(
+
+#selection = alt.selection_multi(fields=['SUBURB'], bind='legend')
+
+#Latest Month Metrics 
+col1, col2  = st.columns(2,gap="small")
+col1.metric("Willetton", "$600k","$-9k")
+col2.metric("Canning Vale", "$504k", "$12k")
+
+
+###Metric line chart over time###
+chart = alt.Chart(df_filt_4).mark_line(
     point={
         "filled": False,
         #"fill": "white",
@@ -157,9 +202,34 @@ chart = alt.Chart(df).mark_line(
                     legend=alt.Legend(orient='top')),
     opacity=alt.value(0.75),
     strokeWidth=alt.value(4),
-    
 ).properties(
     title=select_metric
 )
 st.altair_chart(chart, use_container_width=True)
+
+
+####Top 10 Suburbs by Metric###
+#Transform data to get top 10 suburbs by metric
+df_top_10 = df.groupby(('SUBURB'), as_index=False).sum().sort_values('VALUE',ascending=False).head(10)
+
+#Define Axis
+barchart2 = alt.Chart(df_top_10).mark_bar().encode(
+    x=alt.X('VALUE',
+        axis=alt.Axis(title=select_metric, grid=False)),
+    y=alt.Y('SUBURB', sort=alt.EncodingSortField(field="VALUE", op="sum", order="descending"),
+        axis=alt.Axis(title='', grid=False))
+)
+#Add bar label
+text = barchart2.mark_text(
+    align='left',
+    baseline='middle',
+    dx=3  # Nudges text to right so it doesn't appear on top of the bar
+).encode(
+    text='VALUE'
+)
+#Plot chart
+st.altair_chart(barchart2 + text, use_container_width=True)
+
+
+
 
