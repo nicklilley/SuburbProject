@@ -6,6 +6,7 @@ import snowflake.connector
 import altair as alt
 import datetime
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 ##############################################
@@ -157,14 +158,33 @@ select_suburbs = st.multiselect(
 
 
 #Filter Dataframe based on user filter selections
-df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date #convert DIM_DATE_SK to date
+df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
 df_filt_1 = df.query("METRIC == @select_metric") #Metric Filter
 df_filt_2 = df_filt_1[df.PROPERTY_TYPE.isin(select_property_types)] #Property Type Filter
 df_filt_3 = df_filt_2.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])] #Date Range Filter
 df_filt_4 = df_filt_3[df.SUBURB.isin(select_suburbs)] #Suburb Filter
 
-#Get latest value for each suburb - used for metrics, top 10, bottom 10
+#Get latest record for EVERY suburb for Top 10 and Bottom 10 charts
 df_latest_global = df_filt_3.sort_values('DIM_DATE_SK').groupby('SUBURB').tail(1)
+
+#Get the 2 latest records for FILTERED suburbs for metrics
+#To Do: Use 2nd latest record in metric delta
+df_latest_record    = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([0]).reset_index() #Most recent record for each suburb, 
+#df_2nd_latest_record    = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([1]).reset_index()  #2nd most recent record for each suburb
+
+#df_latest_record = df_latest_n_records.groupby('SUBURB').iloc[-1]
+#df_latest_record = df[df_latest_n_records.cumcount() == n - 1]
+
+#Get latest value
+
+#df_test = df_latest_global[df.SUBURB.isin(select_suburbs)]
+#df_test.hide(axis="index")
+#df_test.style.hide_index()
+
+#Create dataframes to put suburbs into seperate columns by alternating rows
+df_latest_record_col1= df_latest_record.iloc[1::2, :]
+df_latest_record_col2 = df_latest_record.iloc[::2, :]
+
 
 ###############################################
 # PLOT CHARTS ##################################
@@ -178,12 +198,7 @@ st.markdown("""---""") #add horizontal line for section break
 #col1.metric("Willetton", "$600k","$-9k")
 #col2.metric("Canning Vale", "$504k", "$12k")
 
-df_test = df_latest_global[df.SUBURB.isin(select_suburbs)]
-df_test2 = df_test[['SUBURB','VALUE','DIM_DATE_SK']]
-#df_test.hide(axis="index")
-df_test.style.hide_index()
-df_skip_2= df_test.iloc[1::2, :]
-df_2nd = df_test.iloc[::2, :]
+
 
 
 #hide index into df_test dataframe
@@ -196,12 +211,12 @@ df_2nd = df_test.iloc[::2, :]
 col4, col5  = st.columns(2,gap="small")
 with col4:
     #st.subheader("Date")   
-    for index, row in df_skip_2.iterrows():
-        st.metric(row["SUBURB"],row["VALUE"])
+    for index, row in df_latest_record_col1.iterrows():
+        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].datetime.datetime.strptime('%Y%m%d')) + ')'), row["VALUE"])
 with col5:
     #st.subheader("Date")
-    for index, row in df_2nd.iterrows():
-        st.metric(row["SUBURB"],row["VALUE"])
+    for index, row in df_latest_record_col2.iterrows():
+        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"]) + ')'),row["VALUE"])
 
 #col3, col4, col5  = st.columns(3,gap="small")
 #with col3:
