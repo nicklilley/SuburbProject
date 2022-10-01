@@ -3,7 +3,6 @@
 import streamlit as st
 import pandas as pd
 import snowflake.connector
-import snowflake.connector
 import altair as alt
 
 st.set_page_config(

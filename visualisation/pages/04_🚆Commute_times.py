@@ -1,6 +1,9 @@
 import streamlit as st
 import time
 import numpy as np
+import pandas as pd
+import altair as alt
+
 
 st.set_page_config(
      page_title="Commute Times",
@@ -27,3 +30,5 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 
 
+
+alt.renderers.enable('default') #Allows the map to be displayed in the notebook/Jupyterlab

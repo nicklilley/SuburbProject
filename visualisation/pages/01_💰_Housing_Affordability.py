@@ -2,12 +2,9 @@
 import streamlit as st
 import pandas as pd
 import snowflake.connector
-import snowflake.connector
 import altair as alt
 import datetime
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 
 ##############################################
 # PAGE CONFIGURATION #########################
@@ -85,7 +82,7 @@ st.sidebar.markdown("**Select Filters:** 👇")
 
 #Set Date variables
 today = date.today()
-xyearsago = today - datetime.timedelta(days=5*365)
+xyearsago = today - timedelta(days=5*365)
 min_date = date(2011, 1, 1) #API only goes back to 2011
 
 #Get unique values for a column inside the dataframe
@@ -204,15 +201,16 @@ st.markdown("""---""") #add horizontal line for section break
 #hide index into df_test dataframe
 #df_test = df_test.reset_index(drop=True)
 
-#for SUBURB,VALUE in df_test:
-#   st.markdown(df_test['SUBURB'],df_test['VALUE'])
+
 
 #st.markdown(select_metric)
+# Create columns for latest suburb metrics
 col4, col5  = st.columns(2,gap="small")
 with col4:
     #st.subheader("Date")   
     for index, row in df_latest_record_col1.iterrows():
-        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].datetime.datetime.strptime('%Y%m%d')) + ')'), row["VALUE"])
+        #st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].datetime.datetime.strptime('%Y%m%d')) + ')'), row["VALUE"])
+        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"]) + ')'), row["VALUE"])
 with col5:
     #st.subheader("Date")
     for index, row in df_latest_record_col2.iterrows():
