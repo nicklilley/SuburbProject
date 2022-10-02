@@ -4,12 +4,7 @@ import pandas as pd
 import snowflake.connector
 import altair as alt
 import datetime
-import json
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import date, datetime, timedelta
-from urllib.request import urlopen
-
 
 ##############################################
 # PAGE CONFIGURATION #########################
@@ -62,7 +57,7 @@ def run_query(query):
 
 # Fetch the result set from the cursor and deliver it as the Pandas DataFrame.
 df = run_query("""
-SELECT *, upper(SUBURB) as "wa_local_2" FROM SBX_ANALYTICS.dbt_NLilleyman_common.md_suburb_realty_performance
+SELECT * FROM SBX_ANALYTICS.dbt_NLilleyman_common.md_suburb_realty_performance
  """)
 df['VALUE']=pd.to_numeric(df['VALUE'])
 
@@ -133,9 +128,8 @@ date_range = st.sidebar.slider(
 #    default=["house"]
 #)
 
-#########################################################
-# MAIN PAGE FILTERS #####################################
-#########################################################
+################ MAIN PAGE FILTERS ######################
+
 #Display Metric and Property Type filter in columns
 col1, col2 = st.columns(2,gap="small")
 with col1:
@@ -190,7 +184,7 @@ df_latest_record_col2 = df_latest_record.iloc[::2, :]
 
 
 ###############################################
-# PLOT CHARTS #################################
+# PLOT CHARTS ##################################
 ###############################################
 
 st.markdown("""---""") #add horizontal line for section break
@@ -274,41 +268,6 @@ chart = alt.Chart(df_filt_4).mark_line(
     #title=select_metric
 )
 st.altair_chart(chart, use_container_width=True)
-
-################# Suburb Metric Map ##################
-
-#Load geojson file of suburb boundaries
-#with open('visualisation/geojson/suburb-10-wa-state-edit.geojson') as response:
-#    counties = json.load(response)
-
-#Load geojson file of suburb boundaries
-with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-10-wa.geojson') as response:
-    counties = json.load(response)
-
-#Set colour scale for map           
-lower_colour_scale = df_latest_global.VALUE.quantile(0.02) # 5th percentile to ensure outliers don't skew the colour scale
-upper_colour_scale = df_latest_global.VALUE.quantile(0.98) # 95th percentile to ensure outliers don't skew the colour scale
-
-#To Do: Create mapbox access token and add to config.toml file
-mapbox_access_token =  'pk.eyJ1IjoibmljaG9sYXNsaWxsZXltYW4iLCJhIjoiY2w4bHFtNHYwMDZxczN2dGhwZXV3YTJ2cCJ9.R0Nrbbu8C4phcU62W4ld4w'
-px.set_mapbox_access_token(mapbox_access_token)
-fig = px.choropleth_mapbox(df_latest_global, geojson=counties,
-                           locations='wa_local_2', 
-                           featureidkey="properties.wa_local_2", #This is the key in the geojson file
-                           color='VALUE',
-                           color_continuous_scale="Greens",
-                           range_color=(lower_colour_scale, upper_colour_scale),
-                           mapbox_style="carto-positron",
-                           zoom=11, center = {"lat": -32.0488, "lon": 115.892},
-                           opacity=0.5,
-                           labels={'unemp':'unemployment rate'},
-                          )
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-
-fig.update_layout(
-    title_text = '2011 US Agriculture Exports by State',
-)
-st.plotly_chart(fig, use_container_width=True)
 
 ############## Top 10 and Bottom Charts ####################
 #Transform data to get top 10 and bottom suburbs by metric
