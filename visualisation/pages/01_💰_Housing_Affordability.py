@@ -282,7 +282,7 @@ st.altair_chart(chart, use_container_width=True)
 #    counties = json.load(response)
 
 #Load geojson file of suburb boundaries
-with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-10-wa.geojson') as response:
+with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson') as response:
     counties = json.load(response)
 
 #Set colour scale for map           
