@@ -4,7 +4,7 @@ import numpy as np
 
 st.set_page_config(
      page_title="School Performance",
-     page_icon="🧑‍🏫",
+     page_icon="🏠",
      layout="wide",
      initial_sidebar_state="auto",
      menu_items={

@@ -7,7 +7,7 @@ import altair as alt
 
 st.set_page_config(
      page_title="Commute Times",
-     page_icon="🚆",
+     page_icon="🏠",
      layout="wide",
      initial_sidebar_state="auto",
      menu_items={

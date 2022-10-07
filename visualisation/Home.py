@@ -16,6 +16,9 @@ st.set_page_config(
    #      'About': "# This is a header. This is an *extremely* cool app!"
    #  }
  )
+#Remove excessive padding at top of page
+st.write('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
+
 #Icons from https://emojipedia.org/search/?q=police
 
 #Hide hamburger menu
@@ -25,7 +28,6 @@ hide_menu_style = """
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
-
 
 
 ####################
