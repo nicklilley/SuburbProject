@@ -361,7 +361,7 @@ with col7:
 
 with st.spinner('Building a big map...'):
     #Title
-    st.markdown(f'**{select_metric} Map**')
+    st.markdown(f'**Surburb Map - {select_metric}**')
 
     #Load geojson file of suburb boundaries
     with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson') as response:
@@ -381,16 +381,22 @@ with st.spinner('Building a big map...'):
                             color_continuous_scale="Greens",
                             range_color=(lower_colour_scale, upper_colour_scale),
                             mapbox_style="carto-positron",
-                            zoom=10, center = {"lat": -31.9523, "lon": 115.8613},
-                            opacity=0.75,
+                            zoom=10, center = {"lat": -31.9523, "lon": 115.9913},
+                            opacity=0.85,
                             labels={'VALUE':f'{select_metric}',
                                     'wa_local_2':'Suburb',
                                     },
                             )
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},legend_title_text='Legend')
-    
     #Hide Mode Bar with zoom and pan tools
     config = {'displayModeBar': False}
+    
+    #Format legend
+    fig.update_coloraxes(colorbar_title_text='',
+                         colorbar_orientation='h',
+                         #colorbar_yanchor='bottom',
+                         colorbar_thickness=20)
+
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
     #Plot Chart
     st.plotly_chart(fig, config=config, use_container_width=True,)
