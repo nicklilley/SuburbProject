@@ -359,7 +359,6 @@ with col7:
 ######################################################
 ################# Suburb Metric Map ##################
 
-df_latest_global
 with st.spinner('Building a big map...'):
     #Title
     st.markdown(f'**{select_metric} Map**')
@@ -388,7 +387,7 @@ with st.spinner('Building a big map...'):
                                     'wa_local_2':'Suburb',
                                     },
                             )
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},legend_title_text=' ')
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},legend_title_text='Legend')
     
     #Hide Mode Bar with zoom and pan tools
     config = {'displayModeBar': False}
