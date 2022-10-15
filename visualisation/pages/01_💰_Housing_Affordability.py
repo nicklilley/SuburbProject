@@ -80,7 +80,7 @@ st.sidebar.text('')
 st.sidebar.markdown("**Select Filters:** 👇")
 
 ###############################################
-# SIDE BAR FILTERS ############################
+# FILTERS SETUP ###############################
 ###############################################
 
 #Set Date variables
@@ -88,10 +88,29 @@ today = date.today()
 xyearsago = today - timedelta(days=5*365)
 min_date = date(2011, 1, 1) #API only goes back to 2011
 
-#Get unique values for a column inside the dataframe
+#Get unique values for columns inside the dataframe 
 unique_suburbs = df['SUBURB'].unique()
 unique_property_type = df['PROPERTY_TYPE'].unique()
 unique_metrics_type = df['METRIC_TYPE'].unique()
+
+#Sort order of Metrics
+metrics_sorted = ['Median Sold Price','Median Listing Price','Discount Percentage (Listing Price/Sold Price)']
+#                       'Days on Market','Number of Listings','Number Sold','Number Auctioned',
+#                       'Number of Sold Auctions','Highest Sold Price','Lowest Sold Price','Median Rent',
+#                       'Number of Rent Listings','Lowest Rent','Highest Rent'] #Manually sorted metrics
+
+#Filter dataframe by metrics_sorted
+df = df[df['METRIC'].isin(metrics_sorted)] 
+
+#Create Dataframe for metrics and sort by metrics_sorted
+metrics_df = df[['METRIC_TYPE', 'METRIC']].drop_duplicates()
+metrics_df['METRIC_SORT'] = metrics_df['METRIC'].apply(lambda x: metrics_sorted.index(x))
+metrics_df = metrics_df.sort_values(by=['METRIC_SORT'])
+
+
+###############################################
+# SIDEBAR FILTERS #############################
+###############################################
 
 #Date Slider Filter sidebar
 date_range = st.sidebar.slider(
@@ -141,11 +160,11 @@ with col1:
         (unique_metrics_type))
 
    #Restrict Metric list by selected Metric Type
-   unique_metrics = df[df['METRIC_TYPE']==select_metric_types]['METRIC'].unique()
+   metrics_filt = metrics_df[metrics_df['METRIC_TYPE']==select_metric_types]['METRIC']
 
    select_metric = st.selectbox(
         "Select a Metric",
-        (unique_metrics),
+        (metrics_filt),
         index=0)
 
 with col2:
@@ -173,7 +192,7 @@ df_latest_global = df_filt_3.sort_values('DIM_DATE_SK').groupby('SUBURB').tail(1
 
 #Get the 2 latest records for FILTERED suburbs for metrics
 #To Do: Use 2nd latest record in metric delta
-df_latest_record    = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([0]).reset_index() #Most recent record for each suburb, 
+df_latest_record = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([0]).reset_index() #Most recent record for each suburb, 
 #df_2nd_latest_record    = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([1]).reset_index()  #2nd most recent record for each suburb
 
 #df_latest_record = df_latest_n_records.groupby('SUBURB').iloc[-1]
@@ -381,7 +400,7 @@ with st.spinner('Building a big map...'):
                             color_continuous_scale="Greens",
                             range_color=(lower_colour_scale, upper_colour_scale),
                             mapbox_style="carto-positron",
-                            zoom=10, center = {"lat": -31.9523, "lon": 115.9913},
+                            zoom=10, center = {"lat": -31.9698, "lon": 115.9350},
                             opacity=0.85,
                             labels={'VALUE':f'{select_metric}',
                                     'wa_local_2':'Suburb',
