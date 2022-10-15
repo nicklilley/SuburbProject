@@ -16,9 +16,14 @@ base AS (
 		,dim_date_sk
 		 
         --Information
+        ,metric_type
         ,metric
+        ,type_and_metric
         ,property_type
         ,value
+        ,value_prefix
+        ,value_suffix
+        ,value_conditional_round
     FROM prep_suburb_realty_performance
 )
 
