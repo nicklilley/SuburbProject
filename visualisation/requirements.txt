@@ -2,3 +2,4 @@
 snowflake-connector-python
 streamlit>=1.12.0
 pyarrow<8.1.0,>=8.0.0
+vega_datasets >= 0.9.0

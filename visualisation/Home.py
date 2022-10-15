@@ -19,7 +19,6 @@ st.set_page_config(
  )
 #Icons from https://emojipedia.org/search/?q=police
 
-
 #Hide hamburger menu
 hide_menu_style = """
         <style>
