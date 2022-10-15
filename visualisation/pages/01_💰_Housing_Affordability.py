@@ -94,10 +94,10 @@ unique_property_type = df['PROPERTY_TYPE'].unique()
 unique_metrics_type = df['METRIC_TYPE'].unique()
 
 #Sort order of Metrics
-metrics_sorted = ['Median Sold Price','Median Listing Price','Discount Percentage (Listing Price/Sold Price)']
-#                       'Days on Market','Number of Listings','Number Sold','Number Auctioned',
-#                       'Number of Sold Auctions','Highest Sold Price','Lowest Sold Price','Median Rent',
-#                       'Number of Rent Listings','Lowest Rent','Highest Rent'] #Manually sorted metrics
+metrics_sorted = ['Median Sold Price','Median Listing Price','Discount Percentage (Listing Price/Sold Price)',
+                       'Days on Market','Number of Listings','Number Sold','Number Auctioned',
+                       'Number of Sold Auctions','Highest Sold Price','Lowest Sold Price','Median Rent',
+                       'Number of Rent Listings','Lowest Rent','Highest Rent'] #Manually sorted metrics
 
 #Filter dataframe by metrics_sorted
 df = df[df['METRIC'].isin(metrics_sorted)] 
@@ -106,7 +106,6 @@ df = df[df['METRIC'].isin(metrics_sorted)]
 metrics_df = df[['METRIC_TYPE', 'METRIC']].drop_duplicates()
 metrics_df['METRIC_SORT'] = metrics_df['METRIC'].apply(lambda x: metrics_sorted.index(x))
 metrics_df = metrics_df.sort_values(by=['METRIC_SORT'])
-
 
 ###############################################
 # SIDEBAR FILTERS #############################
