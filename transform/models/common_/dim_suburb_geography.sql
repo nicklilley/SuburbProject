@@ -13,6 +13,9 @@ base AS (
 
 		--Natural key
 		 ,suburb_id
+
+        --Bad key - To Do: Clean data so that suburb + state is a viable natural key
+		 ,suburb_state_id
 		 
 		--Information
 		 ,suburb
