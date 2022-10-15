@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: wapolice
+    description: Suburb crime statistics downloaded from the WA Police website
+    database: sbx_raw
+    schema: wapolice
+    tables:
+      - name: raw_wapolice
+        description: Suburb crime statistics downloaded from the WA Police website
+            
