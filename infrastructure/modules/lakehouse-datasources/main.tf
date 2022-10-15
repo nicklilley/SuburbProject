@@ -21,9 +21,9 @@ resource "snowflake_schema" "raw_datasource_schema" {
 #Create S3 Bucket for injesting files
 resource "aws_s3_bucket" "injest-bucket" {
   bucket = lower("${var.env}-${var.datasource}-injest-${var.file_type}")
-  force_destroy = true
+  force_destroy = false
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
   tags = {
     environment = "${var.env}"

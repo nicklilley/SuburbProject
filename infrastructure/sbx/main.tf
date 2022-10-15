@@ -37,7 +37,7 @@ module "lakehouse-datasource-parquet" {
 #Creates infrastructure based on contents of lakehouse-datasoruce directory
 module "lakehouse-datasource-json" {
   source                     = "../modules/lakehouse-datasources" 
-  for_each                   = toset(["suburbmetadata"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
+  for_each                   = toset(["suburbmetadata","wapolice"]) ### ENTER DATASOURCE NAME INTO ARRAY ###
   datasource                 = upper(each.key) #Converts to uppercase and loops through each item in for_each array and creates resources
   file_type                  = upper("json")
   env                        = var.env
