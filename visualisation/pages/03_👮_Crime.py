@@ -31,10 +31,11 @@ st.write('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_h
 
 #Icons from https://emojipedia.org/search/?q=police
 
-#Hide hamburger menu
+#Hide hamburger menu and footer logo
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
@@ -334,9 +335,12 @@ with st.spinner('Building a big map...'):
     #Title
     st.markdown(f'**Surburb Map - {select_metric}**')
 
-    #Load geojson file of suburb boundaries
-    with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson') as response:
-        counties = json.load(response)
+    #Download and cache geojson file
+    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
+    def get_geojson(url):
+        with urlopen(url) as response:
+            return json.load(response)
+    counties = get_geojson('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson')
 
     #Set colour scale for map           
     lower_colour_scale = df_latest_global.VALUE.quantile(0.02) # 5th percentile to ensure outliers don't skew the colour scale

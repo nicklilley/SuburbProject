@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 from datetime import date, datetime, timedelta
 from urllib.request import urlopen
 
-
 ##############################################
 # PAGE CONFIGURATION #########################
 ##############################################
@@ -32,10 +31,11 @@ st.write('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_h
 
 #Icons from https://emojipedia.org/search/?q=police
 
-#Hide hamburger menu
+#Hide hamburger menu and footer logo
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
@@ -53,7 +53,7 @@ with st.spinner('Loadings lots of data...'):
     init_con = init_connection()
 
     #Define function for running queries after creating cache and cursor
-    @st.experimental_memo(ttl=600,show_spinner=False)
+    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
     def run_query(query):
         with init_con.cursor() as cursor: #create cursor
             cursor.execute(query)
@@ -177,6 +177,15 @@ with col2:
         (unique_suburbs),
         default=["Willetton","Harrisdale"])
 
+#Columns
+st.write('''<style>
+
+[data-testid="column"] {
+    width: calc(40% - 1rem) !important;
+    flex: 1 1 calc(10% - 1rem) !important;
+    min-width: calc(40% - 1rem) !important;
+}
+</style>''', unsafe_allow_html=True)
 
 #Filter Dataframe based on user filter selections
 df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
@@ -371,8 +380,14 @@ with col6:
     st.markdown(f'**Top 10 Suburbs - {select_metric}**')
     st.altair_chart(barchart_top10 + rule_top10 + text_top10, use_container_width=True)    
 with col7:
-    st.markdown(f'**Bottom 10 Suburbs - {select_metric}**')
-    st.altair_chart(barchart_bottom10 + rule_bottom10 + text_bottom10, use_container_width=True)
+   st.markdown(f'**Bottom 10 Suburbs - {select_metric}**')
+   st.altair_chart(barchart_bottom10 + rule_bottom10 + text_bottom10, use_container_width=True)
+
+st.markdown(f'**Top 10 Suburbs - {select_metric}**')
+st.altair_chart(barchart_top10 + rule_top10 + text_top10, use_container_width=True)    
+
+st.markdown(f'**Bottom 10 Suburbs - {select_metric}**')
+st.altair_chart(barchart_bottom10 + rule_bottom10 + text_bottom10, use_container_width=True)
 
 ######################################################
 ################# Suburb Metric Map ##################
@@ -381,10 +396,14 @@ with st.spinner('Building a big map...'):
     #Title
     st.markdown(f'**Surburb Map - {select_metric}**')
 
-    #Load geojson file of suburb boundaries
-    with urlopen('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson') as response:
-        counties = json.load(response)
-
+    #Download and cache geojson file
+    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
+    def get_geojson(url):
+        with urlopen(url) as response:
+            return json.load(response)
+    
+    counties = get_geojson('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson')
+    
     #Set colour scale for map           
     lower_colour_scale = df_latest_global.VALUE.quantile(0.02) # 5th percentile to ensure outliers don't skew the colour scale
     upper_colour_scale = df_latest_global.VALUE.quantile(0.98) # 95th percentile to ensure outliers don't skew the colour scale
