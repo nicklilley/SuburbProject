@@ -69,8 +69,9 @@ df['VALUE']=pd.to_numeric(df['VALUE'])
 ##############################################
 # INTRODUCTION  ##############################
 ##############################################
-st.title('Housing Affordability')
-#st.markdown("Sales & rental prices trends across suburbs")
+#st.title('Housing Affordability')
+page_title = '<p style="font-size: 42px; font-weight: bold; text-align: center;">Housing Affordability</p>'
+st.markdown(page_title, unsafe_allow_html=True)
 
 ###############################################
 # SIDEBAR SELECTION ###########################
@@ -172,11 +173,6 @@ with col2:
         (unique_property_type),
         default=["House"])
 
-    select_suburbs = st.multiselect(
-        "Select Suburb(s)",
-        (unique_suburbs),
-        default=["Willetton","Harrisdale"])
-
 #Columns
 st.write('''<style>
 
@@ -193,96 +189,68 @@ df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
 df_filt_1 = df.query("METRIC == @select_metric") #Metric Filter
 df_filt_2 = df_filt_1[df.PROPERTY_TYPE.isin(select_property_types)] #Property Type Filter
 df_filt_3 = df_filt_2.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])] #Date Range Filter
-df_filt_4 = df_filt_3[df.SUBURB.isin(select_suburbs)] #Suburb Filter
+
 
 #Get latest record for EVERY suburb for Top 10 and Bottom 10 charts
 df_latest_global = df_filt_3.sort_values('DIM_DATE_SK').groupby('SUBURB').tail(1)
 
-#Get the 2 latest records for FILTERED suburbs for metrics
-#To Do: Use 2nd latest record in metric delta
-df_latest_record = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([0]).reset_index() #Most recent record for each suburb, 
-#df_2nd_latest_record    = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([1]).reset_index()  #2nd most recent record for each suburb
 
-#df_latest_record = df_latest_n_records.groupby('SUBURB').iloc[-1]
-#df_latest_record = df[df_latest_n_records.cumcount() == n - 1]
 
-#Create dataframes to put suburbs into seperate columns by alternating rows
-df_latest_record_col1= df_latest_record.iloc[1::2, :]
-df_latest_record_col2 = df_latest_record.iloc[::2, :]
+st.markdown("""---""") #add horizontal line for section break
+#st.markdown('#') adds an empty space on page
 
 ###############################################
 # PLOT CHARTS #################################
 ###############################################
 
-st.markdown("""---""") #add horizontal line for section break
-#st.markdown('#') adds an empty space on page
+######################################################
+################# Suburb Metric Map ##################
 
-#Latest Month Metrics 
-#col1, col2  = st.columns(2,gap="small")
-#col1.metric("Willetton", "$600k","$-9k")
-#col2.metric("Canning Vale", "$504k", "$12k")
+with st.spinner('Building a big map...'):
+    #Title
+    st.markdown(f'**Surburb Map - {select_metric}**')
 
-###############################################
-########### Lastest Month Metrics #############
+    #Download and cache geojson file
+    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
+    def get_geojson(url):
+        with urlopen(url) as response:
+            return json.load(response)
+    
+    counties = get_geojson('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson')
+    
+    #Set colour scale for map           
+    lower_colour_scale = df_latest_global.VALUE.quantile(0.02) # 5th percentile to ensure outliers don't skew the colour scale
+    upper_colour_scale = df_latest_global.VALUE.quantile(0.98) # 95th percentile to ensure outliers don't skew the colour scale
 
-# Create columns for latest suburb metrics
-col4, col5  = st.columns(2,gap="small")
-with col4: 
-    for index, row in df_latest_record_col1.iterrows():
-        #st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].datetime.datetime.strptime('%Y%m%d')) + ')'), row["VALUE"])
-        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].strftime('%b-%Y')) + ')'), str(row["VALUE_PREFIX"]) + str(row["VALUE_CONDITIONAL_ROUND"]) + str(row["VALUE_SUFFIX"]))
-with col5:
-    for index, row in df_latest_record_col2.iterrows():
-        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].strftime('%b-%Y')) + ')'), str(row["VALUE_PREFIX"]) + str(row["VALUE_CONDITIONAL_ROUND"]) + str(row["VALUE_SUFFIX"]))
+    #To Do: Create mapbox access token and add to config.toml file
+    mapbox_access_token =  'pk.eyJ1IjoibmljaG9sYXNsaWxsZXltYW4iLCJhIjoiY2w4bHFtNHYwMDZxczN2dGhwZXV3YTJ2cCJ9.R0Nrbbu8C4phcU62W4ld4w'
+    px.set_mapbox_access_token(mapbox_access_token)
+    fig = px.choropleth_mapbox(df_latest_global, geojson=counties,
+                            locations='wa_local_2', 
+                            featureidkey="properties.wa_local_2", #This is the key in the geojson file
+                            color='VALUE',
+                            color_continuous_scale="Greens",
+                            range_color=(lower_colour_scale, upper_colour_scale),
+                            mapbox_style="carto-positron",
+                            zoom=10, center = {"lat": -31.9698, "lon": 115.9350},
+                            opacity=0.85,
+                            labels={'VALUE':f'{select_metric}',
+                                    'wa_local_2':'Suburb',
+                                    },
+                            )
+    #Hide Mode Bar with zoom and pan tools
+    config = {'displayModeBar': False}
+    
+    #Format legend
+    fig.update_coloraxes(colorbar_title_text='',
+                         colorbar_orientation='h',
+                         #colorbar_yanchor='bottom',
+                         colorbar_thickness=20)
 
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
-#col3, col4, col5  = st.columns(3,gap="small")
-#with col3:
-#    st.subheader("**Suburb**")
-#    for index, row in df_test.iterrows():
-#        st.markdown(row["SUBURB"])
-#with col4:
-#    st.subheader("Date")
-#    for index, row in df_skip_2.iterrows():
-#        st.metric(row["SUBURB"],row["VALUE"])
-#with col5:
-#    st.subheader("Date")
-#    for index, row in df_2nd.iterrows():
-#        st.metric(row["SUBURB"],row["VALUE"])
-
-###############################################
-######### Metric line chart over time #########
-
-st.markdown('#') #adds an empty space on page
-
-#Section Title
-st.markdown(f'**Quarterly Trend - {select_metric}**')
-
-chart = alt.Chart(df_filt_4).mark_line(
-    point={
-        "filled": False,
-        #"fill": "white",
-        #"tooltip": True
-        }
-).encode(
-    alt.X('DIM_DATE_SK',
-        axis=alt.Axis(title='Date', grid=False, format='%b-%Y')),
-    alt.Y('VALUE',
-        #axis=alt.Axis(title='Value', grid=False, format='$,r')), #add $ to axis 
-        axis=alt.Axis(title='', grid=False)),
-    color=alt.Color('SUBURB', title='Suburb',
-                    legend=alt.Legend(orient='top')),
-    strokeDash=alt.StrokeDash('PROPERTY_TYPE', title='Property Type',
-                    legend=alt.Legend(orient='top')),
-    opacity=alt.value(0.75),
-    strokeWidth=alt.value(4),
-    tooltip=[alt.Tooltip('VALUE', title=f'{select_metric}'),
-             alt.Tooltip('SUBURB', title='Suburb'),
-             alt.Tooltip('DIM_DATE_SK', title='Date', format='%b-%Y')],
-).properties(
-    #title=select_metric
-)
-st.altair_chart(chart, use_container_width=True)
+    #Plot Chart
+    st.plotly_chart(fig, config=config, use_container_width=True,)
 
 ###############################################
 ####### Top 10 and Bottom Charts ##############
@@ -389,51 +357,96 @@ st.altair_chart(barchart_top10 + rule_top10 + text_top10, use_container_width=Tr
 st.markdown(f'**Bottom 10 Suburbs - {select_metric}**')
 st.altair_chart(barchart_bottom10 + rule_bottom10 + text_bottom10, use_container_width=True)
 
-######################################################
-################# Suburb Metric Map ##################
+st.markdown("""---""") #add horizontal line for section break
 
-with st.spinner('Building a big map...'):
-    #Title
-    st.markdown(f'**Surburb Map - {select_metric}**')
+###############################################
+########### Specific Suburb Section ############
 
-    #Download and cache geojson file
-    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
-    def get_geojson(url):
-        with urlopen(url) as response:
-            return json.load(response)
-    
-    counties = get_geojson('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson')
-    
-    #Set colour scale for map           
-    lower_colour_scale = df_latest_global.VALUE.quantile(0.02) # 5th percentile to ensure outliers don't skew the colour scale
-    upper_colour_scale = df_latest_global.VALUE.quantile(0.98) # 95th percentile to ensure outliers don't skew the colour scale
+specific_suburb_title = '<p style="font-size: 30px; font-weight: bold; text-align: center;">Suburb Comparison</p>'
+#color: #4e79a7;
+st.markdown(specific_suburb_title, unsafe_allow_html=True)
 
-    #To Do: Create mapbox access token and add to config.toml file
-    mapbox_access_token =  'pk.eyJ1IjoibmljaG9sYXNsaWxsZXltYW4iLCJhIjoiY2w4bHFtNHYwMDZxczN2dGhwZXV3YTJ2cCJ9.R0Nrbbu8C4phcU62W4ld4w'
-    px.set_mapbox_access_token(mapbox_access_token)
-    fig = px.choropleth_mapbox(df_latest_global, geojson=counties,
-                            locations='wa_local_2', 
-                            featureidkey="properties.wa_local_2", #This is the key in the geojson file
-                            color='VALUE',
-                            color_continuous_scale="Greens",
-                            range_color=(lower_colour_scale, upper_colour_scale),
-                            mapbox_style="carto-positron",
-                            zoom=10, center = {"lat": -31.9698, "lon": 115.9350},
-                            opacity=0.85,
-                            labels={'VALUE':f'{select_metric}',
-                                    'wa_local_2':'Suburb',
-                                    },
-                            )
-    #Hide Mode Bar with zoom and pan tools
-    config = {'displayModeBar': False}
-    
-    #Format legend
-    fig.update_coloraxes(colorbar_title_text='',
-                         colorbar_orientation='h',
-                         #colorbar_yanchor='bottom',
-                         colorbar_thickness=20)
+###############################################
+########### Suburb Filters ############
 
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+select_suburbs = st.multiselect(
+    "Select Suburb(s)",
+    (unique_suburbs),
+    default=["Willetton","Harrisdale"])
 
-    #Plot Chart
-    st.plotly_chart(fig, config=config, use_container_width=True,)
+df_filt_4 = df_filt_3[df.SUBURB.isin(select_suburbs)] #Suburb Filter
+#Get the 2 latest records for FILTERED suburbs for metrics
+#To Do: Use 2nd latest record in metric delta
+df_latest_record = df_filt_4.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([0]).reset_index() #Most recent record for each suburb, 
+
+#df_latest_record = df_latest_n_records.groupby('SUBURB').iloc[-1]
+#df_latest_record = df[df_latest_n_records.cumcount() == n - 1]
+
+#Create dataframes to put suburbs into seperate columns by alternating rows
+df_latest_record_col1= df_latest_record.iloc[1::2, :]
+df_latest_record_col2 = df_latest_record.iloc[::2, :]
+
+###############################################
+########### Lastest Month Metrics #############
+
+# Create columns for latest suburb metrics
+col4, col5  = st.columns(2,gap="small")
+with col4: 
+    for index, row in df_latest_record_col1.iterrows():
+        #st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].datetime.datetime.strptime('%Y%m%d')) + ')'), row["VALUE"])
+        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].strftime('%b-%Y')) + ')'), str(row["VALUE_PREFIX"]) + str(row["VALUE_CONDITIONAL_ROUND"]) + str(row["VALUE_SUFFIX"]))
+with col5:
+    for index, row in df_latest_record_col2.iterrows():
+        st.metric((row["SUBURB"] + ' (' +str(row["DIM_DATE_SK"].strftime('%b-%Y')) + ')'), str(row["VALUE_PREFIX"]) + str(row["VALUE_CONDITIONAL_ROUND"]) + str(row["VALUE_SUFFIX"]))
+
+
+#col3, col4, col5  = st.columns(3,gap="small")
+#with col3:
+#    st.subheader("**Suburb**")
+#    for index, row in df_test.iterrows():
+#        st.markdown(row["SUBURB"])
+#with col4:
+#    st.subheader("Date")
+#    for index, row in df_skip_2.iterrows():
+#        st.metric(row["SUBURB"],row["VALUE"])
+#with col5:
+#    st.subheader("Date")
+#    for index, row in df_2nd.iterrows():
+#        st.metric(row["SUBURB"],row["VALUE"])
+
+###############################################
+######### Metric line chart over time #########
+
+st.markdown('#') #adds an empty space on page
+
+#Section Title
+st.markdown(f'**Quarterly Trend - {select_metric}**')
+
+chart = alt.Chart(df_filt_4).mark_line(
+    point={
+        "filled": False,
+        #"fill": "white",
+        #"tooltip": True
+        }
+).encode(
+    alt.X('DIM_DATE_SK',
+        axis=alt.Axis(title='Date', grid=False, format='%b-%Y')),
+    alt.Y('VALUE',
+        #axis=alt.Axis(title='Value', grid=False, format='$,r')), #add $ to axis 
+        axis=alt.Axis(title='', grid=False)),
+    color=alt.Color('SUBURB', title='Suburb',
+                    legend=alt.Legend(orient='top')),
+    strokeDash=alt.StrokeDash('PROPERTY_TYPE', title='Property Type',
+                    legend=alt.Legend(orient='top')),
+    opacity=alt.value(0.75),
+    strokeWidth=alt.value(4),
+    tooltip=[alt.Tooltip('VALUE', title=f'{select_metric}'),
+             alt.Tooltip('SUBURB', title='Suburb'),
+             alt.Tooltip('DIM_DATE_SK', title='Date', format='%b-%Y')],
+).properties(
+    #title=select_metric
+)
+st.altair_chart(chart, use_container_width=True)
+
+
+

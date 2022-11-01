@@ -23,8 +23,8 @@ st.set_page_config(
      }
  )
 
-progress_bar = st.sidebar.progress(0)
-status_text = st.sidebar.empty()
+#progress_bar = st.sidebar.progress(0)
+#status_text = st.sidebar.empty()
 
 #Remove excessive padding at top of page
 st.write('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
@@ -62,6 +62,7 @@ with st.spinner('Loadings lots of data...'):
     # Fetch the result set from the cursor and deliver it as the Pandas DataFrame.
     df = run_query("""
     SELECT *, upper(SUBURB) AS "wa_local_2",OFFENCE AS METRIC, OFFENCE_COUNT AS VALUE FROM SBX_ANALYTICS.dbt_NLilleyman_common.md_suburb_crime_wa
+    --where suburb in ('Victoria Park','North Fremantle')
     """)
 
 df['VALUE']=pd.to_numeric(df['VALUE'])
@@ -120,7 +121,6 @@ metrics_df = df[['METRIC']].drop_duplicates()
 metrics_df['METRIC_SORT'] = metrics_df['METRIC'].apply(lambda x: metrics_sorted.index(x))
 metrics_df = metrics_df.sort_values(by=['METRIC_SORT'])
 
-
 ###############################################
 # SIDEBAR FILTERS #############################
 ###############################################
@@ -154,17 +154,16 @@ with col2:
 
 #Filter Dataframe based on user filter selections
 df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
-#df['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.strftime('%b-%Y')
 df_filt_1 = df.query("METRIC == @select_metric") #Metric Filter
 df_filt_2 = df_filt_1.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])] #Date Range Filter
 df_filt_3= df_filt_2[df.SUBURB.isin(select_suburbs)] #Suburb Filter
 
 #Get latest record for EVERY suburb for Top 10 and Bottom 10 charts
-df_latest_global = df_filt_2.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([1]).reset_index()
+df_latest_global = df_filt_2.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB_ID').nth([0]).reset_index()
 
 #Get the 2 latest records for FILTERED suburbs for metrics
 #To Do: Use 2nd latest record in metric delta
-df_latest_record = df_filt_3.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB').nth([1]).reset_index() #Most recent record for each suburb, 
+df_latest_record = df_filt_3.sort_values('DIM_DATE_SK',ascending=False).groupby('SUBURB_ID').nth([0]).reset_index() #Most recent record for each suburb
 
 #Create dataframes to put suburbs into seperate columns by alternating rows
 df_latest_record_col1= df_latest_record.iloc[1::2, :]
@@ -176,11 +175,6 @@ df_latest_record_col2 = df_latest_record.iloc[::2, :]
 
 st.markdown("""---""") #add horizontal line for section break
 #st.markdown('#') adds an empty space on page
-
-#Latest Month Metrics 
-#col1, col2  = st.columns(2,gap="small")
-#col1.metric("Willetton", "$600k","$-9k")
-#col2.metric("Canning Vale", "$504k", "$12k")
 
 ###############################################
 ########### Lastest Month Metrics #############
@@ -196,7 +190,6 @@ with col5:
 
 ###############################################
 ######### Metric line chart over time #########
-
 st.markdown('#') #adds an empty space on page
 
 #Section Title
@@ -210,19 +203,16 @@ chart = alt.Chart(df_filt_3).mark_line(
         }
 ).encode(
     alt.X('DIM_DATE_SK',
-        axis=alt.Axis(title='Date', grid=False, format='%b-%Y')),
+        axis=alt.Axis(title='Year', grid=False, format='%Y')),
     alt.Y('VALUE',
-        #axis=alt.Axis(title='Value', grid=False, format='$,r')), #add $ to axis 
         axis=alt.Axis(title='', grid=False)),
     color=alt.Color('SUBURB', title='Suburb',
                     legend=alt.Legend(orient='top')),
-    #strokeDash=alt.StrokeDash('PROPERTY_TYPE', title='Property Type',
-    #               legend=alt.Legend(orient='top')),
     opacity=alt.value(0.75),
     strokeWidth=alt.value(4),
     tooltip=[alt.Tooltip('VALUE', title=f'{select_metric}'),
              alt.Tooltip('SUBURB', title='Suburb'),
-             alt.Tooltip('DIM_DATE_SK', title='Date', format='%b-%Y')],
+             alt.Tooltip('DIM_DATE_SK', title='Year', format='%Y')],
 ).properties(
     #title=select_metric
 )
@@ -233,8 +223,10 @@ st.altair_chart(chart, use_container_width=True)
 ####### Top 10 and Bottom Charts ##############
 
 #Transform data to get top 10 and bottom suburbs by metric
+
 df_top_10 = df_latest_global.sort_values('VALUE',ascending=False).head(10)
 df_bottom_10 = df_latest_global.sort_values('VALUE',ascending=True).head(10)
+
 
 ##########Top 10 Suburbs by Metric#############
 #Define Axis
@@ -252,8 +244,8 @@ barchart_top10 = alt.Chart(df_top_10).mark_bar(
     opacity=alt.value(0.9)
 )
 #Add global mean line
-domain = ['setosa']
-range_ = ['red']
+#domain = ['setosa']
+#range_ = ['red']
 rule_top10 = alt.Chart(df_latest_global).mark_rule().encode(
     x='mean(VALUE)',
     tooltip=[alt.Tooltip('mean(VALUE)', title='National Average')],
@@ -330,7 +322,6 @@ with col7:
 
 ######################################################
 ################# Suburb Metric Map ##################
-
 with st.spinner('Building a big map...'):
     #Title
     st.markdown(f'**Surburb Map - {select_metric}**')
