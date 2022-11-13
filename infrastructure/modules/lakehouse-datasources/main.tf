@@ -23,7 +23,6 @@ resource "aws_s3_bucket" "injest-bucket" {
   bucket = lower("${var.env}-${var.datasource}-injest-${var.file_type}")
   force_destroy = false
   lifecycle {
-    prevent_destroy = true
   }
   tags = {
     environment = "${var.env}"
