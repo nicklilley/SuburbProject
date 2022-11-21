@@ -10,6 +10,15 @@ import plotly.graph_objects as go
 from datetime import date, datetime, timedelta
 from urllib.request import urlopen
 
+##Order
+#crime rate vs count of specific crimes switch
+#Map Crime Rate
+#top 10 bottom 10 crime rate 
+##Suburb compare section
+#suburb compare line chart crime rate trend (with summary stat)
+#suburb compare of count of specific crimes
+#  with summary stat 
+#suburb
 
 st.set_page_config(
      page_title="Crime Statistics",
@@ -65,13 +74,17 @@ with st.spinner('Loadings lots of data...'):
     --where suburb in ('Victoria Park','North Fremantle')
     """)
 
-df['VALUE']=pd.to_numeric(df['VALUE'])
+    df_crime_rate = run_query("""
+    SELECT *, upper(SUBURB) AS "wa_local_2", crime_rate_per_100_people AS VALUE   FROM SBX_ANALYTICS.dbt_NLilleyman_common.METRIC_CRIME_RATE_WA    --where suburb in ('Victoria Park','North Fremantle')
+    """)
 
+df['VALUE']=pd.to_numeric(df['VALUE'])
+ 
 ##############################################
 # INTRODUCTION  ##############################
 ##############################################
-st.title('Crime Statistics')
-#st.markdown("Sales & rental prices trends across suburbs")
+page_title = '<p style="font-size: 42px; font-weight: bold; text-align: center;">Crime Statistics</p>'
+st.markdown(page_title, unsafe_allow_html=True)
 
 ###############################################
 # SIDEBAR SELECTION ###########################
@@ -169,12 +182,74 @@ df_latest_record = df_filt_3.sort_values('DIM_DATE_SK',ascending=False).groupby(
 df_latest_record_col1= df_latest_record.iloc[1::2, :]
 df_latest_record_col2 = df_latest_record.iloc[::2, :]
 
+######################################################
+################ Crime Rate Filters ##################
+
+#Filter Dataframe based on user filter selections
+df_crime_rate['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
+#df_crime_rate_filt_1 = df_crime_rate.query("METRIC == @select_metric") #Metric Filter
+#df_crime_rate_filt_2 = df_crime_rate_filt_1.loc[df['DIM_DATE_SK'].between(date_range[0], date_range[1])] #Date Range Filter
+#df_crime_rate_filt_3 = df_crime_rate_filt_2[df.SUBURB.isin(select_suburbs)] #Suburb Filter
+
+#Get latest record for EVERY suburb for Top 10 and Bottom 10 charts
+df_crime_rate_latest_global = df_crime_rate.sort_values('DIM_DATE_SK',ascending=False).groupby('DIM_SUBURB_SK').nth([0]).reset_index()
+df_crime_rate_latest_global
 ###############################################
 # PLOT CHARTS #################################
 ###############################################
 
 st.markdown("""---""") #add horizontal line for section break
 #st.markdown('#') adds an empty space on page
+
+######################################################
+################# Suburb Crime Rate Map ##################
+with st.spinner('Building a big map...'):
+    #Title
+    st.markdown(f'**Crime Rate by Suburb**')
+
+    #Download and cache geojson file
+    @st.experimental_memo(ttl=60*60*24,show_spinner=False)
+    def get_geojson(url):
+        with urlopen(url) as response:
+            return json.load(response)
+    counties = get_geojson('https://raw.githubusercontent.com/nicklilley/SuburbProject/NickL/SBX-Visualisation/visualisation/geojson/suburb-2-wa-edit.geojson')
+
+    #Set colour scale for map           
+    lower_colour_scale = df_crime_rate_latest_global.VALUE.quantile(0.35) # 5th percentile to ensure outliers don't skew the colour scale
+    upper_colour_scale = df_crime_rate_latest_global.VALUE.quantile(0.90) # 95th percentile to ensure outliers don't skew the colour scale
+
+    #To Do: Create mapbox access token and add to config.toml file
+    mapbox_access_token =  'pk.eyJ1IjoibmljaG9sYXNsaWxsZXltYW4iLCJhIjoiY2w4bHFtNHYwMDZxczN2dGhwZXV3YTJ2cCJ9.R0Nrbbu8C4phcU62W4ld4w'
+    px.set_mapbox_access_token(mapbox_access_token)
+    fig = px.choropleth_mapbox(df_crime_rate_latest_global, geojson=counties,
+                            locations='wa_local_2', 
+                            featureidkey="properties.wa_local_2", #This is the key in the geojson file
+                            color='VALUE',
+                            color_continuous_scale="Reds",
+                            range_color=(lower_colour_scale, upper_colour_scale),
+                            mapbox_style="carto-positron",
+                            zoom=10, center = {"lat": -31.9698, "lon": 115.9350},
+                            opacity=0.85,
+                            labels={'VALUE':f'{select_metric}',
+                                    'wa_local_2':'Suburb',
+                                    },
+                            )
+    #Hide Mode Bar with zoom and pan tools
+    config = {'displayModeBar': False}
+    
+    #Format legend
+    fig.update_coloraxes(colorbar_title_text='',
+                         colorbar_orientation='h',
+                         #colorbar_yanchor='bottom',
+                         colorbar_thickness=20)
+
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+    #Plot Chart
+    st.plotly_chart(fig, config=config, use_container_width=True,)
+
+
+
 
 ###############################################
 ########### Lastest Month Metrics #############
