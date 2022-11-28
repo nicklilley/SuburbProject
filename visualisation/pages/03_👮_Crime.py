@@ -49,9 +49,9 @@ hide_menu_style = """
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 
-##############################################
-# DATA CONNECTION ############################
-##############################################
+##########################################################################
+# DATA CONNECTION ########################################################
+########################################################################## 
 
 # Initialize connection
 # Uses st.experimental_singleton to only run once.
@@ -80,22 +80,22 @@ with st.spinner('Loadings lots of data...'):
 
 df['VALUE']=pd.to_numeric(df['VALUE'])
  
-##############################################
-# INTRODUCTION  ##############################
-##############################################
+################################################################################### 
+# INTRODUCTION  ################################################################### 
+################################################################################### 
 page_title = '<p style="font-size: 42px; font-weight: bold; text-align: center;">Crime Statistics</p>'
 st.markdown(page_title, unsafe_allow_html=True)
 
-###############################################
-# SIDEBAR SELECTION ###########################
-###############################################
+#################################################################################### 
+# SIDEBAR SELECTION ################################################################ 
+#################################################################################### 
 #st.sidebar.image("visualisation/CityIcon1.jpg", use_column_width=True)
 st.sidebar.text('')
 st.sidebar.markdown("**Select Filters:** 👇")
 
-###############################################
-# FILTERS SETUP ###############################
-###############################################
+#################################################################################### 
+# FILTERS SETUP #################################################################### 
+#################################################################################### 
 
 #Set Date variables
 today = date.today()
@@ -134,9 +134,9 @@ metrics_df = df[['METRIC']].drop_duplicates()
 metrics_df['METRIC_SORT'] = metrics_df['METRIC'].apply(lambda x: metrics_sorted.index(x))
 metrics_df = metrics_df.sort_values(by=['METRIC_SORT'])
 
-###############################################
-# SIDEBAR FILTERS #############################
-###############################################
+#################################################################################### 
+# SIDEBAR FILTERS ################################################################## 
+#################################################################################### 
 
 #Date Slider Filter sidebar
 date_range = st.sidebar.slider(
@@ -146,9 +146,9 @@ date_range = st.sidebar.slider(
     min_value=min_date,
     format="MMM-YY")
 
-#########################################################
-# MAIN PAGE FILTERS #####################################
-#########################################################
+#####################################################################################
+# MAIN PAGE FILTERS ################################################################# 
+##################################################################################### 
 #Display Metric and Property Type filter in columns
 col1, col2 = st.columns(2,gap="small")
 with col1:
@@ -194,15 +194,16 @@ df_crime_rate['DIM_DATE_SK'] = pd.to_datetime(df['DIM_DATE_SK']).dt.date
 #Get latest record for EVERY suburb for Top 10 and Bottom 10 charts
 df_crime_rate_latest_global = df_crime_rate.sort_values('DIM_DATE_SK',ascending=False).groupby('DIM_SUBURB_SK').nth([0]).reset_index()
 df_crime_rate_latest_global
-###############################################
-# PLOT CHARTS #################################
-###############################################
+
+#################################################################################### 
+# PLOT CHARTS ###################################################################### 
+#################################################################################### 
 
 st.markdown("""---""") #add horizontal line for section break
 #st.markdown('#') adds an empty space on page
 
 ######################################################
-################# Suburb Crime Rate Map ##################
+################# Suburb Crime Rate Map ##############
 with st.spinner('Building a big map...'):
     #Title
     st.markdown(f'**Crime Rate by Suburb**')
@@ -247,7 +248,6 @@ with st.spinner('Building a big map...'):
 
     #Plot Chart
     st.plotly_chart(fig, config=config, use_container_width=True,)
-
 
 
 
