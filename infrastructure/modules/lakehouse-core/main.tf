@@ -6,21 +6,21 @@
 resource "snowflake_database" "db-raw" {
   name                        = upper("${var.env}_RAW")
   comment                     = "Raw database for landing data"
-  data_retention_time_in_days = 3
+  data_retention_time_in_days = 30
 }
 
 #Create PREP database for DBT source models and transformations
 resource "snowflake_database" "db-prep" {
   name                        = upper("${var.env}_PREP")
   comment                     = "Prep data for DBT source models and transformations"
-  data_retention_time_in_days = 3
+  data_retention_time_in_days = 30
 }
 
 #Create Analytics database data consumption
 resource "snowflake_database" "db-analytics" {
   name                        = upper("${var.env}_ANALYTICS")
   comment                     = "Analytics or PROD database for consuming data"
-  data_retention_time_in_days = 3
+  data_retention_time_in_days = 30
 }
 
 #Create Warehouse for transforming data 
@@ -33,7 +33,7 @@ resource snowflake_warehouse w {
 resource "snowflake_schema" "prep_schema" {
   database            = snowflake_database.db-prep.name
   name                = "PREPERATION"
-  data_retention_days = 14
+  data_retention_days = 30
   depends_on          = [snowflake_database.db-prep]
 }
 
@@ -41,7 +41,7 @@ resource "snowflake_schema" "prep_schema" {
 resource "snowflake_schema" "common_schema" {
   database            = upper("${var.env}_ANALYTICS")
   name                = "COMMON"
-  data_retention_days = 14
+  data_retention_days = 30
   depends_on          = [snowflake_database.db-analytics]
 }
 
@@ -52,6 +52,7 @@ resource "snowflake_table" "table" {
   schema              = "PUBLIC"
   name                = "API_CALL_LOG"
   comment             = "Table for log of API calls across all projects"
+  data_retention_days = 30
   column {
     name     = "API_NAME"
     type     = "varchar"

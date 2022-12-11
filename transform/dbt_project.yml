@@ -53,6 +53,10 @@ models:
         +materialized: table
         +schema: suburbmetadata
 
+      wapolice:
+        +materialized: table
+        +schema: wapolice     
+
     # ------------------
     # Common
     # ------------------

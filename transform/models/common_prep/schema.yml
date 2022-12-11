@@ -8,6 +8,10 @@ models:
         tests:
           - not_null
           - unique
+      - name: suburb
+        tests:
+          - not_null
+          - unique
 
   - name: prep_suburb_demographics
     description: Prep table for suburb demograhpic data from the ABS. This prep table will be used for Facts and Dimensions
@@ -21,6 +25,14 @@ models:
     description: Prep table for realty statistics, such as rental and sales prices. This prep table will be used for Facts and Dimensions
     columns:
       - name: suburb_realty_performance_sk
+        tests:
+          - not_null
+          - unique
+
+  - name: prep_suburb_crime_wa
+    description: Prep table for Crime statistics for WA. This prep table will be used for Facts and Dimensions
+    columns:
+      - name: suburb_crime_wa_sk
         tests:
           - not_null
           - unique
