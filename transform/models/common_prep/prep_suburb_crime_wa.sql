@@ -35,6 +35,8 @@ base AS (
         ,november_count
         ,december_count
     FROM suburb_crime_wa
+    WHERE
+         year(DIM_DATE_SK) < year (current_date) -- Remove values from current year, as crime data only present in the following year
 )
 
 SELECT * FROM base

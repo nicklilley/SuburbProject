@@ -7,7 +7,7 @@ WITH demographics as (
         ,SPLIT_PART(SPLIT_PART(file_name, '_', 5), '.', 1)::varchar AS api_response_code
         ,payload:demographics.year::varchar AS year
         ,payload:demographics.total::varchar AS total
-        ,payload:demographics.type::varchar AS type
+        ,payload:demographics.type::varchar AS demographic_type
         ,f1.value:composition::varchar  as composition
         ,f1.value:label::varchar as response_option
         ,f1.value:value::number  as value

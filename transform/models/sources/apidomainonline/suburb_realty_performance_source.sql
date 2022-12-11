@@ -15,7 +15,7 @@ WITH realty_performance as (
             WHEN f1.key = 'lowestSoldPrice' THEN 'Lowest Sold Price'
             WHEN f1.key = 'numberSaleListing' THEN 'Number of Listings'
             WHEN f1.key = 'auctionNumberAuctioned' THEN 'Number Auctioned'
-            WHEN f1.key = 'medianRentListingPrice' THEN 'Median Rent '
+            WHEN f1.key = 'medianRentListingPrice' THEN 'Median Rent'
             WHEN f1.key = 'daysOnMarket' THEN 'Days on Market'
             WHEN f1.key = '95thPercentileSoldPrice' THEN '95th Percentile Sold Price'
             WHEN f1.key = 'highestRentListingPrice' THEN 'Highest Rent'

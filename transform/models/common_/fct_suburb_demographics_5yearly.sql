@@ -20,7 +20,7 @@ base AS (
 --        ,postcode
 --        ,state
 --        ,year
-        ,type
+        ,demographic_type
         ,composition
         ,response_option
         ,total

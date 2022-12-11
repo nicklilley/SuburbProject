@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dim_suburb
+  - name: dim_suburb_geography
     description: Dimension table for Australian suburb metadata
     columns:
       - name: dim_suburb_sk
@@ -9,10 +9,34 @@ models:
           - not_null
           - unique
 
-  - name: fct_suburb_demographics
-    description: Fact table for suburb demograhpic data from the ABS
+  - name: fct_suburb_demographics_5yearly
+    description: Fact table for suburb demograhpic data from the ABS at a 5 yearly grain
     columns:
       - name: suburb_demographics_pk
+        tests:
+          - not_null
+          - unique
+  
+  - name: fct_suburb_demographics_yearly
+    description: Fact table for suburb demograhpic data from the ABS at a yearly grain
+    columns:
+      - name: suburb_demographics_pk
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_suburb_crime_wa_fin_yearly
+    description: Fact table for crime data from the WA police
+    columns:
+      - name: suburb_crime_wa_pk
+        tests:
+          - not_null
+          - unique
+
+  - name: md_suburb_crime_wa
+    description: Master Data table for crime data from the WA police
+    columns:
+      - name: suburb_crime_wa_pk
         tests:
           - not_null
           - unique

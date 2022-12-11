@@ -20,7 +20,8 @@ dim_date AS (
 
 base AS (
     SELECT
-         CRIME.dim_date_sk
+         CRIME.suburb_crime_wa_pk
+        ,CRIME.dim_date_sk
         ,GEO.suburb_id
 --      ,GEO.suburb_state_id
         ,GEO.suburb

@@ -8,4 +8,9 @@ sources:
     tables:
       - name: raw_wapolice
         description: Suburb crime statistics downloaded from the WA Police website
-            
+        columns:
+          - name: file_name
+            description: Name of Suburb
+            tests:
+              - unique
+              - not_null           

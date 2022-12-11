@@ -10,18 +10,20 @@ suburb_demographics AS (
 base AS (
     SELECT
         --Surrogate Key
-         {{ dbt_utils.surrogate_key(['response_option', 'type','suburb','postcode','year'])}} AS suburb_demographics_sk
+         {{ dbt_utils.surrogate_key(['response_option', 'demographic_type','suburb','postcode','year'])}} AS suburb_demographics_sk
 
         --Foreign Keys
         ,{{ dbt_utils.surrogate_key(['suburb','postcode','state'])}} AS dim_suburb_sk
         ,to_date(year, 'YYYY') AS dim_date_sk 
 
         --Information
+        ,to_date(year, 'YYYY') AS census_valid_from 
+        ,dateadd(MONTH, 59, census_valid_from) AS census_valid_to
         ,suburb
         ,postcode
         ,state
         ,year
-        ,type
+        ,demographic_type
         ,composition
         ,response_option
         ,total
