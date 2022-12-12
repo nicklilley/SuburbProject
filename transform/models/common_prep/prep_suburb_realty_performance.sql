@@ -7,6 +7,7 @@ suburb_realty_performance AS (
     FROM {{ ref('suburb_realty_performance_source') }}
   --To Do (upstream deletes): WHERE is_deleted = FALSE
 ),
+
 base AS (
     SELECT
         --Surrogate Key
@@ -17,6 +18,7 @@ base AS (
         ,to_date((year||'-'||month),'YYYY-MM') AS dim_date_sk -- To Do (Should all date SKs be at same grain, e.g. year, day, yearmonth)
 
         --Information
+        ,load_timestamp_tz
         ,suburb
         ,postcode
         ,state
@@ -104,6 +106,15 @@ base AS (
             ELSE value
             END::number(38,0) AS value_conditional_round
     FROM suburb_realty_performance
-)
+),
 
-SELECT * FROM base
+--Each file contains many years of year. Deduplicate macro takes the values from the most recently loaded file
+dedupe AS (
+ {{ dbt_utils.deduplicate(
+    relation='base',
+    partition_by='suburb_realty_performance_sk',
+    order_by="load_timestamp_tz desc"
+   )
+}})
+
+SELECT * FROM dedupe

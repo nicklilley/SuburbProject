@@ -1,6 +1,8 @@
 WITH realty_performance as (
     SELECT
-         SPLIT_PART(file_name, '_', 6)::varchar AS api_endpoint
+         file_name AS file_name
+        ,LOAD_TIMESTAMP_TZ::TIMESTAMP_TZ AS load_timestamp_tz
+        ,SPLIT_PART(file_name, '_', 6)::varchar AS api_endpoint
         ,SPLIT_PART(file_name, '_', 0)::varchar AS state
         ,SPLIT_PART(file_name, '_', 2)::varchar AS suburb
         ,SPLIT_PART(file_name, '_', 3)::varchar AS postcode

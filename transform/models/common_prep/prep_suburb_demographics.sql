@@ -17,6 +17,7 @@ base AS (
         ,to_date(year, 'YYYY') AS dim_date_sk 
 
         --Information
+        ,load_timestamp_tz
         ,to_date(year, 'YYYY') AS census_valid_from 
         ,dateadd(MONTH, 59, census_valid_from) AS census_valid_to
         ,suburb
@@ -29,6 +30,15 @@ base AS (
         ,total
         ,value
     FROM suburb_demographics
-)
+),
 
-SELECT * FROM base
+--Multiple identical files may have been loaded. Deduplicate macro takes the values from the most recently loaded file
+dedupe AS (
+ {{ dbt_utils.deduplicate(
+    relation='base',
+    partition_by='suburb_demographics_sk',
+    order_by="load_timestamp_tz desc"
+   )
+}})
+
+SELECT * FROM dedupe

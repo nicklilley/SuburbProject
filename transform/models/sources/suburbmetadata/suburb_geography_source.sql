@@ -1,6 +1,8 @@
 WITH suburb_geography AS (
     SELECT
-          f.value:id::varchar AS suburb_id
+          file_name AS file_name
+         ,LOAD_TIMESTAMP_TZ::TIMESTAMP_TZ AS load_timestamp_tz
+		 ,f.value:id::varchar AS suburb_id
 		 ,initcap(f.value:locality::varchar) AS suburb
 		 ,f.value:postcode::varchar AS postcode
 		 ,f.value:state::varchar AS state
