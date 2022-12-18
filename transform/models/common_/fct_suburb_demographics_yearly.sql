@@ -14,7 +14,7 @@ dim_date AS (
 base AS (
     SELECT
 		--Primary key
-         suburb_demographics_sk AS suburb_demographics_pk
+         year_start_date ||'-'|| suburb_demographics_sk  AS suburb_demographics_yearly_pk
 
         --Foreign Keys
         ,DEMO.dim_suburb_sk

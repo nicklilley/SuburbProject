@@ -20,7 +20,7 @@ models:
   - name: fct_suburb_demographics_yearly
     description: Fact table for suburb demograhpic data from the ABS at a yearly grain
     columns:
-      - name: suburb_demographics_pk
+      - name: suburb_demographics_yearly_pk
         tests:
           - not_null
           - unique
