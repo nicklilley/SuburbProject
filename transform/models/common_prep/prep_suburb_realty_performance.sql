@@ -112,9 +112,10 @@ base AS (
 dedupe AS (
  {{ dbt_utils.deduplicate(
     relation='base',
-    partition_by='suburb_realty_performance_sk',
+    partition_by='suburb_realty_performance_sk, property_type',
     order_by="load_timestamp_tz desc"
    )
 }})
 
 SELECT * FROM dedupe
+

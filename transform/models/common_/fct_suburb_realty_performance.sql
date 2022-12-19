@@ -16,6 +16,7 @@ base AS (
 		,dim_date_sk
 		 
         --Information
+        ,suburb
         ,metric_type
         ,metric
         ,type_and_metric
